@@ -1,10 +1,10 @@
 import { useState, useEffect } from 'react';
-import { useRoleAccess } from '../hooks/useAuth';
+import { useRoleAccess } from '../hooks/useRoleAccess';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
 
 export default function Users() {
-  const { user, loading: authLoading, hasAccess } = useRoleAccess('user_management');
+  const { user, loading: authLoading, canManageUsers } = useRoleAccess('/users');
   const [users, setUsers] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showModal, setShowModal] = useState(false);
@@ -18,18 +18,17 @@ export default function Users() {
   });
 
   useEffect(() => {
-    // Check access and fetch data
-    if (user && hasAccess === false) {
-      alert('Access Denied: You do not have permission to access User Management.');
-      window.location.href = '/';
+    // Only proceed if user is loaded and has access
+    if (authLoading) return;
+    
+    if (!user || !canManageUsers) {
+      // Access denied will be handled by useRoleAccess hook
       return;
     }
     
-    if (user && hasAccess === true) {
-      setLoading(false);
-      fetchUsers();
-    }
-  }, [user, hasAccess]);
+    setLoading(false);
+    fetchUsers();
+  }, [user, canManageUsers, authLoading]);
 
   const fetchUsers = async () => {
     try {
@@ -178,13 +177,55 @@ export default function Users() {
   }
 
   return (
-    <div className="app-layout">
+    <div className="dashboard-container">
       <Sidebar user={user} onExpandedChange={setSidebarExpanded} />
-      <div className="main-content">
-        <Header user={user} sidebarExpanded={sidebarExpanded} />
-        <main>
+      <div className={`dashboard-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+        <Header 
+          title=""
+          sidebarExpanded={sidebarExpanded}
+          setSidebarExpanded={setSidebarExpanded}
+        />
+
+        {/* SUB HEADER - STANDARD SIZE */}
+        <div style={{
+          position: 'fixed',
+          top: '85px',
+          left: sidebarExpanded ? '0px' : '0px',
+          right: '0',
+          minHeight: '100px',
+          background: 'white',
+          borderBottom: '1px solid #e2e8f0',
+          boxShadow: '0 2px 8px rgba(0, 0, 0, 0.06)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          padding: '15px 48px',
+          zIndex: 1000,
+          transition: 'left 0.3s ease',
+          overflow: 'hidden'
+        }}>
+          <div style={{ 
+            margin: 0, 
+            fontSize: '1.5rem', 
+            fontWeight: '700',
+            color: '#1e293b'
+          }}>
+            {/* Title removed - only in Header */}
+          </div>
+          
+          <div style={{ 
+            display: 'flex', 
+            gap: '16px', 
+            alignItems: 'center' 
+          }}>
+            <span style={{ color: '#9CA3AF', fontSize: '14px' }}>
+              User management doesn't require slicers
+            </span>
+          </div>
+        </div>
+
+        <main style={{ marginTop: '185px', padding: '24px' }}>
           <div className="users-header">
-            <h1>User Management</h1>
             <div style={{ marginBottom: '20px', color: '#666', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
               👤 Logged in as: <strong>{user.username}</strong> ({user.role})
             </div>
@@ -216,16 +257,18 @@ export default function Users() {
                     onChange={(e) => setFormData({...formData, password: e.target.value})}
                     required
                   />
-                  <select
+                  <select 
                     value={formData.role}
                     onChange={(e) => setFormData({...formData, role: e.target.value})}
                   >
                     <option value="user">User</option>
-                    <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="executive">Executive</option>
+                    <option value="operator">Operator</option>
                   </select>
-                  <div className="form-buttons">
-                    <button type="submit">Create User</button>
+                  <div className="modal-actions">
+                    <button type="submit">Add User</button>
                     <button type="button" onClick={() => setShowModal(false)}>Cancel</button>
                   </div>
                 </form>
@@ -249,12 +292,12 @@ export default function Users() {
                   <input
                     type="email"
                     placeholder="Email (optional)"
-                    value={editingUser.email}
+                    value={editingUser.email || ''}
                     onChange={(e) => setEditingUser({...editingUser, email: e.target.value})}
                   />
                   <input
                     type="password"
-                    placeholder="Password"
+                    placeholder="New Password"
                     value={editingUser.password}
                     onChange={(e) => setEditingUser({...editingUser, password: e.target.value})}
                     required
@@ -264,20 +307,22 @@ export default function Users() {
                     onChange={(e) => setEditingUser({...editingUser, role: e.target.value})}
                   >
                     <option value="user">User</option>
-                    <option value="manager">Manager</option>
                     <option value="admin">Admin</option>
+                    <option value="manager">Manager</option>
+                    <option value="executive">Executive</option>
+                    <option value="operator">Operator</option>
                   </select>
-                  <div className="form-buttons">
+                  <div className="modal-actions">
                     <button type="submit">Update User</button>
-                    <button type="button" onClick={() => { setShowEditModal(false); setEditingUser(null); }}>Cancel</button>
+                    <button type="button" onClick={() => setShowEditModal(false)}>Cancel</button>
                   </div>
                 </form>
               </div>
             </div>
           )}
 
-          <div className="users-table">
-            <table>
+          <div className="users-table-container">
+            <table className="users-table">
               <thead>
                 <tr>
                   <th>ID</th>
@@ -290,230 +335,274 @@ export default function Users() {
                 </tr>
               </thead>
               <tbody>
-                {users.map(userItem => (
-                  <tr key={userItem.id}>
-                    <td>{userItem.id}</td>
-                    <td>{userItem.username}</td>
-                    <td style={{ fontFamily: 'monospace', fontSize: '0.9rem' }}>{userItem.password}</td>
-                    <td>N/A</td>
-                    <td>
-                      <span className={`role-badge role-${userItem.role.toLowerCase()}`}>
-                        {userItem.role.toUpperCase()}
-                      </span>
-                    </td>
-                    <td>Invalid Date</td>
-                    <td>
-                      <button 
-                        onClick={() => handleEditUser(userItem)}
-                        className="action-btn edit-btn"
-                      >
-                        Edit
-                      </button>
-                      <button 
-                        onClick={() => handleResetPassword(userItem.id)}
-                        className="action-btn reset-btn"
-                      >
-                        Reset
-                      </button>
-                      <button 
-                        onClick={() => handleDeleteUser(userItem.id)}
-                        className="action-btn delete-btn"
-                      >
-                        Delete
-                      </button>
+                {loading ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
+                      Loading users...
                     </td>
                   </tr>
-                ))}
+                ) : users.length === 0 ? (
+                  <tr>
+                    <td colSpan="7" style={{ textAlign: 'center', padding: '20px' }}>
+                      No users found
+                    </td>
+                  </tr>
+                ) : (
+                  users.map((user) => (
+                    <tr key={user.id}>
+                      <td>{user.id}</td>
+                      <td>{user.username}</td>
+                      <td>{user.password}</td>
+                      <td>{user.email || 'N/A'}</td>
+                      <td>
+                        <span className={`role-badge ${user.role.toLowerCase()}`}>
+                          {user.role.toUpperCase()}
+                        </span>
+                      </td>
+                      <td>Invalid Date</td>
+                      <td>
+                        <div className="action-buttons">
+                          <button 
+                            onClick={() => handleEditUser(user)}
+                            className="btn-edit"
+                          >
+                            Edit
+                          </button>
+                          <button 
+                            onClick={() => handleResetPassword(user.id)}
+                            className="btn-reset"
+                          >
+                            Reset
+                          </button>
+                          <button 
+                            onClick={() => handleDeleteUser(user.id)}
+                            className="btn-delete"
+                          >
+                            Delete
+                          </button>
+                        </div>
+                      </td>
+                    </tr>
+                  ))
+                )}
               </tbody>
             </table>
           </div>
-
-          <style jsx>{`
-            .users-header {
-              margin-bottom: 30px;
-            }
-
-            .users-header h1 {
-              margin: 0 0 10px 0;
-              color: #333;
-              font-size: 2rem;
-              font-weight: 600;
-            }
-
-            .add-user-btn {
-              background: linear-gradient(135deg, #28a745, #20c997);
-              color: white;
-              border: none;
-              padding: 12px 24px;
-              border-radius: 8px;
-              cursor: pointer;
-              font-weight: 600;
-              transition: all 0.3s ease;
-            }
-
-            .add-user-btn:hover {
-              transform: translateY(-2px);
-              box-shadow: 0 4px 15px rgba(40, 167, 69, 0.3);
-            }
-
-            .modal-overlay {
-              position: fixed;
-              top: 0;
-              left: 0;
-              right: 0;
-              bottom: 0;
-              background: rgba(0, 0, 0, 0.5);
-              display: flex;
-              align-items: center;
-              justify-content: center;
-              z-index: 1000;
-            }
-
-            .modal {
-              background: white;
-              padding: 30px;
-              border-radius: 12px;
-              width: 500px;
-              max-width: 90vw;
-              box-shadow: 0 10px 30px rgba(0, 0, 0, 0.3);
-            }
-
-            .modal h3 {
-              margin: 0 0 20px 0;
-              color: #333;
-            }
-
-            .modal form {
-              display: flex;
-              flex-direction: column;
-              gap: 15px;
-            }
-
-            .modal input,
-            .modal select {
-              padding: 12px;
-              border: 1px solid #ddd;
-              border-radius: 6px;
-              font-size: 1rem;
-            }
-
-            .form-buttons {
-              display: flex;
-              gap: 10px;
-              margin-top: 10px;
-            }
-
-            .form-buttons button {
-              flex: 1;
-              padding: 12px;
-              border: none;
-              border-radius: 6px;
-              cursor: pointer;
-              font-weight: 600;
-            }
-
-            .form-buttons button[type="submit"] {
-              background: #28a745;
-              color: white;
-            }
-
-            .form-buttons button[type="button"] {
-              background: #6c757d;
-              color: white;
-            }
-
-            .users-table {
-              background: white;
-              border-radius: 12px;
-              overflow: hidden;
-              box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-            }
-
-            .users-table table {
-              width: 100%;
-              border-collapse: collapse;
-            }
-
-            .users-table th,
-            .users-table td {
-              padding: 15px;
-              text-align: left;
-              border-bottom: 1px solid #eee;
-            }
-
-            .users-table th {
-              background: #f8f9fa;
-              font-weight: 600;
-              color: #333;
-            }
-
-            .role-badge {
-              padding: 4px 12px;
-              border-radius: 20px;
-              font-size: 0.8rem;
-              font-weight: 600;
-              text-transform: uppercase;
-            }
-
-            .role-admin {
-              background: #dc3545;
-              color: white;
-            }
-
-            .role-manager {
-              background: #ffc107;
-              color: #212529;
-            }
-
-            .role-user {
-              background: #6c757d;
-              color: white;
-            }
-
-            .action-btn {
-              padding: 6px 12px;
-              border: none;
-              border-radius: 4px;
-              cursor: pointer;
-              font-size: 0.85rem;
-              margin-right: 5px;
-              transition: all 0.2s ease;
-              font-weight: 500;
-            }
-
-            .edit-btn {
-              background: #28a745;
-              color: white;
-            }
-
-            .reset-btn {
-              background: #007bff;
-              color: white;
-            }
-
-            .delete-btn {
-              background: #dc3545;
-              color: white;
-            }
-
-            .action-btn:hover {
-              opacity: 0.8;
-              transform: translateY(-1px);
-            }
-
-            @media (max-width: 768px) {
-              .users-table {
-                overflow-x: auto;
-              }
-
-              .modal {
-                margin: 20px;
-                width: auto;
-              }
-            }
-          `}</style>
         </main>
       </div>
+
+      <style jsx>{`
+        .dashboard-container {
+          display: flex;
+          min-height: 100vh;
+          background: #f8f9fa;
+        }
+        
+        .dashboard-content {
+          flex: 1;
+          transition: margin-left 0.3s ease;
+        }
+        
+        .sidebar-expanded {
+          margin-left: 280px;
+        }
+        
+        .sidebar-collapsed {
+          margin-left: 75px;
+        }
+        
+        .users-header {
+          margin-bottom: 30px;
+        }
+        
+        .users-header h1 {
+          color: #1f2937;
+          font-size: 2rem;
+          margin-bottom: 10px;
+          font-weight: 700;
+        }
+        
+        .add-user-btn {
+          background: linear-gradient(135deg, #3b82f6, #1d4ed8);
+          color: white;
+          border: none;
+          padding: 12px 24px;
+          border-radius: 8px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 1rem;
+          box-shadow: 0 4px 15px rgba(59, 130, 246, 0.3);
+          transition: all 0.3s ease;
+        }
+        
+        .add-user-btn:hover {
+          transform: translateY(-2px);
+          box-shadow: 0 6px 20px rgba(59, 130, 246, 0.4);
+        }
+        
+        .modal-overlay {
+          position: fixed;
+          top: 0;
+          left: 0;
+          right: 0;
+          bottom: 0;
+          background: rgba(0, 0, 0, 0.5);
+          display: flex;
+          justify-content: center;
+          align-items: center;
+          z-index: 9999;
+        }
+        
+        .modal {
+          background: white;
+          padding: 30px;
+          border-radius: 12px;
+          box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+          width: 400px;
+          max-width: 90vw;
+        }
+        
+        .modal h3 {
+          margin: 0 0 20px 0;
+          color: #1f2937;
+          font-size: 1.5rem;
+          font-weight: 700;
+        }
+        
+        .modal input, .modal select {
+          width: 100%;
+          padding: 12px;
+          margin: 8px 0;
+          border: 1px solid #d1d5db;
+          border-radius: 6px;
+          font-size: 1rem;
+          box-sizing: border-box;
+        }
+        
+        .modal-actions {
+          display: flex;
+          gap: 10px;
+          margin-top: 20px;
+        }
+        
+        .modal-actions button {
+          flex: 1;
+          padding: 12px;
+          border: none;
+          border-radius: 6px;
+          cursor: pointer;
+          font-weight: 600;
+          font-size: 1rem;
+        }
+        
+        .modal-actions button[type="submit"] {
+          background: #10b981;
+          color: white;
+        }
+        
+        .modal-actions button[type="button"] {
+          background: #6b7280;
+          color: white;
+        }
+        
+        .users-table-container {
+          background: white;
+          border-radius: 12px;
+          box-shadow: 0 4px 20px rgba(0, 0, 0, 0.1);
+          overflow: hidden;
+        }
+        
+        .users-table {
+          width: 100%;
+          border-collapse: collapse;
+        }
+        
+        .users-table th {
+          background: #f8f9fa;
+          padding: 15px;
+          text-align: left;
+          font-weight: 600;
+          color: #374151;
+          border-bottom: 1px solid #e5e7eb;
+        }
+        
+        .users-table td {
+          padding: 15px;
+          border-bottom: 1px solid #f3f4f6;
+          color: #374151;
+        }
+        
+        .users-table tr:hover {
+          background: #f9fafb;
+        }
+        
+        .role-badge {
+          padding: 4px 12px;
+          border-radius: 20px;
+          font-size: 0.8rem;
+          font-weight: 600;
+          text-transform: uppercase;
+        }
+        
+        .role-badge.admin {
+          background: #fecaca;
+          color: #dc2626;
+        }
+        
+        .role-badge.manager {
+          background: #fef3c7;
+          color: #d97706;
+        }
+        
+        .role-badge.executive {
+          background: #fef3c7;
+          color: #d97706;
+        }
+        
+        .role-badge.operator {
+          background: #d1fae5;
+          color: #059669;
+        }
+        
+        .role-badge.user {
+          background: #d1fae5;
+          color: #059669;
+        }
+        
+        .action-buttons {
+          display: flex;
+          gap: 8px;
+        }
+        
+        .action-buttons button {
+          padding: 6px 12px;
+          border: none;
+          border-radius: 4px;
+          cursor: pointer;
+          font-size: 0.9rem;
+          font-weight: 600;
+        }
+        
+        .btn-edit {
+          background: #10b981;
+          color: white;
+        }
+        
+        .btn-reset {
+          background: #3b82f6;
+          color: white;
+        }
+        
+        .btn-delete {
+          background: #ef4444;
+          color: white;
+        }
+        
+        .action-buttons button:hover {
+          opacity: 0.8;
+          transform: translateY(-1px);
+        }
+      `}</style>
     </div>
   );
 } 

@@ -1,11 +1,14 @@
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
+import { useLastUpdate } from '../hooks/useLastUpdate';
+import { getVisibleMenuItems } from '../lib/roles';
 
 export default function Sidebar({ user, onExpandedChange }) {
   const [isExpanded, setIsExpanded] = useState(true); // DEFAULT EXPANDABLE
   const [expandedSubmenu, setExpandedSubmenu] = useState(null);
   const router = useRouter();
+  const { lastUpdate, loading: lastUpdateLoading } = useLastUpdate();
 
   // Auto-expand submenu jika user berada di halaman submenu
   useEffect(() => {
@@ -21,37 +24,28 @@ export default function Sidebar({ user, onExpandedChange }) {
     }
   }, [isExpanded, onExpandedChange]);
 
-  const handleLogout = async () => {
+  const formatLastUpdate = (timestamp) => {
+    if (!timestamp) return `🔄 Data Updated: ${new Date().toLocaleDateString('en-US', { 
+      month: 'short', 
+      day: '2-digit', 
+      year: 'numeric' 
+    })}`;
+    
+    // If timestamp already contains the full formatted string, return as is
+    if (typeof timestamp === 'string' && timestamp.includes('🔄 Data Updated:')) {
+      return timestamp;
+    }
+    
+    // Otherwise format as date
     try {
-      console.log('🔄 Starting logout...');
-      
-      const response = await fetch('/api/auth/logout', { 
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        }
-      });
-      
-      if (response.ok) {
-        console.log('✅ Logout API success');
-      } else {
-        console.log('⚠️ Logout API failed, but continuing...');
-      }
+      return `🔄 Data Updated: ${new Date(timestamp).toLocaleDateString('en-US', { 
+        month: 'short', 
+        day: '2-digit', 
+        year: 'numeric' 
+      })}`;
     } catch (error) {
-      console.error('❌ Logout API error:', error);
+      return timestamp;
     }
-    
-    try {
-      document.cookie = 'user_id=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      document.cookie = 'username=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT'; 
-      document.cookie = 'user_role=; Path=/; Expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      console.log('🍪 Cookies cleared manually');
-    } catch (cookieError) {
-      console.error('Cookie clear error:', cookieError);
-    }
-    
-    console.log('🔄 Redirecting to login...');
-    window.location.href = '/login';
   };
 
   // Toggle submenu - hanya tutup jika user manual klik
@@ -59,82 +53,122 @@ export default function Sidebar({ user, onExpandedChange }) {
     setExpandedSubmenu(current => current === menuKey ? null : menuKey);
   };
 
-  const menuItems = [
-    { 
-      key: 'overview',
-      icon: '📊', 
-      label: 'Overview', 
-      href: '/',
-      isActive: router.pathname === '/'
-    },
-    { 
-      key: 'strategic',
-      icon: '🎯', 
-      label: 'Strategic Executive', 
-      href: '/strategic-executive',
-      isActive: router.pathname === '/strategic-executive'
-    },
-    { 
-      key: 'business',
-      icon: '💼', 
-      label: 'Business Flow', 
-      href: '/business-flow',
-      isActive: router.pathname === '/business-flow'
-    },
-    { 
-      key: 'bgo',
-      icon: '🚀', 
-      label: 'BGO', 
-      href: '/bgo',
-      isActive: router.pathname === '/bgo'
-    },
-    { 
-      key: 'sr',
-      icon: '📋', 
-      label: 'S&R', 
-      href: '/sr',
-      isActive: router.pathname === '/sr'
-    },
-    { 
-      key: 'xoo',
-      icon: '🔄', 
-      label: 'XOO', 
-      href: '/xoo',
-      isActive: router.pathname === '/xoo'
-    },
-    { 
-      key: 'os',
-      icon: '⚙️', 
-      label: 'OS', 
-      href: '/os',
-      isActive: router.pathname === '/os'
-    },
-    { 
-      key: 'transaction',
-      icon: '💳', 
-      label: 'Transaction', 
-      href: '#',
-      hasSubmenu: true,
-      isActive: router.pathname.startsWith('/transaction'),
-      submenu: [
-        { label: 'Member Report', href: '/transaction/member-report' },
-        { label: 'Deposit Transaction', href: '/transaction/deposit' },
-        { label: 'Withdraw Transaction', href: '/transaction/withdraw' },
-        { label: 'New Depositor', href: '/transaction/new-depositor' },
-        { label: 'VIP Program', href: '/transaction/vip-program' },
-        { label: 'Adjustment', href: '/transaction/adjustment' },
-        { label: 'Headcount', href: '/transaction/headcount' },
-        { label: 'Exchange', href: '/transaction/exchange' }
-      ]
-    },
-    { 
-      key: 'users',
-      icon: '👤', 
-      label: 'User Management', 
-      href: '/users',
-      isActive: router.pathname === '/users'
+  // PROPER ROLE-BASED MENU LOGIC - EXACTLY AS BOSS REQUESTED
+  const getMenuForRole = (userRole) => {
+    if (!userRole) return [];
+    
+    const role = userRole.toLowerCase();
+    
+    // 1. Admin = All Access + User Management
+    if (role === 'admin') {
+      return [
+        { path: '/', name: 'Overview', icon: '📊' },
+        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
+        { path: '/business-flow', name: 'Business Flow', icon: '🔄' },
+        { path: '/bgo', name: 'BGO', icon: '🎯' },
+        { path: '/os', name: 'OS', icon: '⚙️' },
+        { path: '/sr', name: 'SR', icon: '📋' },
+        { path: '/xoo', name: 'XOO', icon: '🔧' },
+        { 
+          name: 'Transaction', 
+          icon: '💰', 
+          subItems: [
+            { path: '/transaction/deposit', name: 'Deposit', icon: '💰' },
+            { path: '/transaction/withdraw', name: 'Withdraw', icon: '💸' },
+            { path: '/transaction/exchange', name: 'Exchange', icon: '🔄' },
+            { path: '/transaction/headcount', name: 'Headcount', icon: '👥' },
+            { path: '/transaction/adjustment', name: 'Adjustment', icon: '⚖️' },
+            { path: '/transaction/vip-program', name: 'VIP Program', icon: '👑' },
+            { path: '/transaction/new-depositor', name: 'New Depositor', icon: '🆕' },
+            { path: '/transaction/member-report', name: 'Member Report', icon: '📊' }
+          ]
+        },
+        { path: '/users', name: 'User Management', icon: '👤' }
+      ];
     }
-  ];
+    
+    // 2. Manager = Limited Access (Overview, Strategic Executive, Business Flow)
+    if (role === 'manager') {
+      return [
+        { path: '/', name: 'Overview', icon: '📊' },
+        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
+        { path: '/business-flow', name: 'Business Flow', icon: '🔄' }
+      ];
+    }
+    
+    // 3. Executive = Limited Access (Overview, Strategic Executive, Business Flow)
+    if (role === 'executive') {
+      return [
+        { path: '/', name: 'Overview', icon: '📊' },
+        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
+        { path: '/business-flow', name: 'Business Flow', icon: '🔄' }
+      ];
+    }
+    
+    // 4. & 5. Operator/User = All pages except User Management
+    if (role === 'operator' || role === 'user') {
+      return [
+        { path: '/', name: 'Overview', icon: '📊' },
+        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
+        { path: '/business-flow', name: 'Business Flow', icon: '🔄' },
+        { path: '/bgo', name: 'BGO', icon: '🎯' },
+        { path: '/os', name: 'OS', icon: '⚙️' },
+        { path: '/sr', name: 'SR', icon: '📋' },
+        { path: '/xoo', name: 'XOO', icon: '🔧' },
+        { 
+          name: 'Transaction', 
+          icon: '💰', 
+          subItems: [
+            { path: '/transaction/deposit', name: 'Deposit', icon: '💰' },
+            { path: '/transaction/withdraw', name: 'Withdraw', icon: '💸' },
+            { path: '/transaction/exchange', name: 'Exchange', icon: '🔄' },
+            { path: '/transaction/headcount', name: 'Headcount', icon: '👥' },
+            { path: '/transaction/adjustment', name: 'Adjustment', icon: '⚖️' },
+            { path: '/transaction/vip-program', name: 'VIP Program', icon: '👑' },
+            { path: '/transaction/new-depositor', name: 'New Depositor', icon: '🆕' },
+            { path: '/transaction/member-report', name: 'Member Report', icon: '📊' }
+          ]
+        }
+        // NO USER MANAGEMENT for Operator/User
+      ];
+    }
+    
+    // Default fallback
+    return [
+      { path: '/', name: 'Overview', icon: '📊' }
+    ];
+  };
+
+  const menuItemsToShow = user ? getMenuForRole(user.role) : [];
+
+  // Convert role-based menu items to sidebar format
+  const menuItems = menuItemsToShow.map(item => {
+    if (item.subItems) {
+      // Transaction menu with submenu
+      return {
+        key: 'transaction',
+        icon: item.icon,
+        label: item.name,
+        href: '#',
+        hasSubmenu: true,
+        isActive: router.pathname.startsWith('/transaction'),
+        submenu: item.subItems.map(subItem => ({
+          label: subItem.name,
+          href: subItem.path
+        }))
+      };
+    } else {
+      // Regular menu item
+      const key = item.path === '/' ? 'overview' : item.path.replace('/', '');
+      return {
+        key: key,
+        icon: item.icon,
+        label: item.name,
+        href: item.path,
+        isActive: router.pathname === item.path
+      };
+    }
+  });
 
   return (
     <>
@@ -232,12 +266,17 @@ export default function Sidebar({ user, onExpandedChange }) {
           </ul>
         </nav>
 
-        {/* Logout Button */}
-        <div className="logout-section">
-          <button className="logout-btn" onClick={handleLogout} data-tooltip="Logout">
-            <span className="icon">🚪</span>
-            {isExpanded && <span className="label">Logout</span>}
-          </button>
+        {/* Last Update Section */}
+        <div className="last-update-section">
+          <div className="last-update-item" data-tooltip="Last Update">
+            {isExpanded && (
+              <div className="update-content">
+                <span className="update-text-single">
+                  {lastUpdateLoading ? 'Loading...' : `LAST UPDATE: ${formatLastUpdate(lastUpdate).replace('🔄 Data Updated: ', '')}`}
+                </span>
+              </div>
+            )}
+          </div>
         </div>
       </aside>
 
@@ -268,7 +307,14 @@ export default function Sidebar({ user, onExpandedChange }) {
           border-right: none;
           border-top: none;
           border-bottom: none;
-          overflow: hidden;
+          overflow: hidden !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        .sidebar::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
         }
 
         .sidebar.collapsed {
@@ -294,6 +340,14 @@ export default function Sidebar({ user, onExpandedChange }) {
           border-left: none;
           border-right: none;
           border-top: none;
+          overflow: hidden !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        .header-section::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
         }
 
         .logo-container {
@@ -306,19 +360,21 @@ export default function Sidebar({ user, onExpandedChange }) {
         .company-logo {
           width: 45px;
           height: 45px;
-          border-radius: 12px;
+          border-radius: 50%;
           overflow: hidden;
           display: flex;
           align-items: center;
           justify-content: center;
-          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background: transparent;
+          border: 2px solid #fbbf24;
+          box-shadow: 0 0 8px rgba(251, 191, 36, 0.3);
         }
 
         .logo-image {
           width: 100%;
           height: 100%;
           object-fit: cover;
-          border-radius: 12px;
+          border-radius: 50%;
         }
 
         .company-text {
@@ -374,8 +430,26 @@ export default function Sidebar({ user, onExpandedChange }) {
         .nav-menu {
           flex: 1;
           padding: 20px 0;
-          overflow-y: auto;
-          overflow-x: hidden;
+          overflow: hidden !important;
+          max-height: calc(100vh - 200px);
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        .nav-menu::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+        }
+
+        .nav-menu * {
+          overflow: hidden !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        .nav-menu *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
         }
 
         .nav-menu ul {
@@ -494,38 +568,93 @@ export default function Sidebar({ user, onExpandedChange }) {
           flex-shrink: 0;
         }
 
-        .logout-btn {
+        .last-update-section {
+          margin-top: auto;
+          padding: 16px 0;
+          border-top: 1px solid rgba(255, 255, 255, 0.1);
+          overflow: hidden !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        .last-update-section::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+        }
+
+        /* FORCE ALL SIDEBAR CHILDREN TO HAVE NO SCROLL */
+        .sidebar *,
+        .sidebar *::before,
+        .sidebar *::after {
+          overflow: hidden !important;
+          scrollbar-width: none !important;
+          -ms-overflow-style: none !important;
+        }
+
+        .sidebar *::-webkit-scrollbar {
+          display: none !important;
+          width: 0 !important;
+        }
+
+        .last-update-item {
           display: flex;
           align-items: center;
+          padding: 14px 18px;
+          color: #fbbf24;
+          font-size: 0.9rem;
+          background: linear-gradient(135deg, rgba(251, 191, 36, 0.2), rgba(245, 158, 11, 0.15));
+          border-radius: 10px;
+          margin: 0 12px;
+          border: 1px solid rgba(251, 191, 36, 0.4);
+          box-shadow: 0 2px 8px rgba(251, 191, 36, 0.2);
+          position: relative;
+          overflow: hidden;
+        }
+
+        .last-update-item::before {
+          content: '';
+          position: absolute;
+          top: 0;
+          left: 0;
+          right: 0;
+          height: 2px;
+          background: linear-gradient(90deg, #fbbf24, #f59e0b, #fbbf24);
+          animation: shimmer 2s infinite;
+        }
+
+        @keyframes shimmer {
+          0% { transform: translateX(-100%); }
+          100% { transform: translateX(100%); }
+        }
+
+
+
+        .update-content {
+          display: flex;
+          align-items: center;
+          flex: 1;
           width: 100%;
-          padding: 12px 20px;
-          background: none;
-          border: none;
-          color: #f87171;
-          cursor: pointer;
-          transition: all 0.2s ease;
         }
 
-        .logout-btn:hover {
-          background: rgba(248, 113, 113, 0.1);
-          color: #fca5a5;
+        .update-text-single {
+          color: #ffffff;
+          font-size: 0.85rem;
+          font-weight: 600;
+          line-height: 1.3;
+          text-shadow: 0 1px 2px rgba(0, 0, 0, 0.4);
+          background: linear-gradient(90deg, #fbbf24, #f59e0b);
+          -webkit-background-clip: text;
+          -webkit-text-fill-color: transparent;
+          background-clip: text;
+          white-space: nowrap;
+          overflow: hidden;
+          text-overflow: ellipsis;
+          letter-spacing: 0.2px;
+          width: 100%;
+          text-align: center;
         }
 
-        /* Scrollbar untuk Main Menu */
-        .nav-menu::-webkit-scrollbar {
-          width: 4px;
-        }
-
-        .nav-menu::-webkit-scrollbar-track {
-          background: transparent;
-        }
-
-        .nav-menu::-webkit-scrollbar-thumb {
-          background: rgba(255,255,255,0.2);
-          border-radius: 2px;
-        }
-
-        /* Scrollbar untuk SUBMENU */
+        /* Scrollbar untuk SUBMENU ONLY */
         .submenu-container::-webkit-scrollbar {
           width: 4px;
         }
@@ -546,13 +675,13 @@ export default function Sidebar({ user, onExpandedChange }) {
         /* Tooltip for collapsed state */
         .sidebar.collapsed .menu-link,
         .sidebar.collapsed .menu-button,
-        .sidebar.collapsed .logout-btn {
+        .sidebar.collapsed .last-update-item {
           position: relative;
         }
 
         .sidebar.collapsed .menu-link:hover::after,
         .sidebar.collapsed .menu-button:hover::after,
-        .sidebar.collapsed .logout-btn:hover::after {
+        .sidebar.collapsed .last-update-item:hover::after {
           content: attr(data-tooltip);
           position: absolute;
           left: 75px;

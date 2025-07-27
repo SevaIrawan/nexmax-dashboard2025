@@ -5,10 +5,10 @@ import Header from '../components/Header';
 import StatCard from '../components/StatCard';
 import BarChart from '../components/BarChart';
 import LineChart from '../components/LineChart';
-import { useAuth } from '../hooks/useAuth';
+import { useRoleAccess } from '../hooks/useRoleAccess';
 
 export default function Home() {
-  const { user, loading: authLoading, debugInfo } = useAuth();
+  const { user, loading: authLoading } = useRoleAccess('/');
   const [loading, setLoading] = useState(true);
   const [dashboardData, setDashboardData] = useState(null);
   const [previousMonthData, setPreviousMonthData] = useState(null);
@@ -118,9 +118,9 @@ export default function Home() {
       case 'MYR':
         return 'RM';
       case 'SGD':
-        return 'S$';
+        return 'SGD';
       case 'KHR':
-        return '៛';
+        return 'USC';
       default:
         return 'RM';
     }
@@ -154,7 +154,7 @@ export default function Home() {
       }}>
         <div style={{ fontSize: '2rem' }}>🔄</div>
         <div>Loading authentication...</div>
-        <div style={{ fontSize: '0.9rem', color: '#666' }}>{debugInfo}</div>
+        <div style={{ fontSize: '0.9rem', color: '#666' }}>{user?.debugInfo}</div>
       </div>
     );
   }
@@ -283,7 +283,7 @@ export default function Home() {
         <Header user={user} sidebarExpanded={sidebarExpanded} />
         {/* Fixed Header with Performance Overview and Slicer */}
         <div className="dashboard-header-fixed">
-          <h2 className="dashboard-subtitle">📊 Performance Overview</h2>
+          <h2 className="dashboard-subtitle"></h2>
           <div className="slicer-controls">
             <div className="filter-group">
               <label>Year:</label>
@@ -303,7 +303,7 @@ export default function Home() {
               </select>
             </div>
             <div className="filter-group">
-              <label>Period:</label>
+              <label>Month:</label>
               <select value={month} onChange={e => setMonth(e.target.value)}>
                 <option value="January">January</option>
                 <option value="February">February</option>
@@ -332,8 +332,10 @@ export default function Home() {
                   <div key={i} className="kpi-card-improved">
                     <div className="kpi-icon">{stat.icon}</div>
                     <div className="kpi-content">
-                      <h3 className="kpi-title">{stat.title}</h3>
-                      <div className="kpi-value" style={{ color: stat.color === 'green' ? '#10B981' : stat.color === 'blue' ? '#3B82F6' : stat.color === 'purple' ? '#8B5CF6' : stat.color === 'orange' ? '#F59E0B' : '#EF4444' }}>
+                      <h3 className="kpi-title" style={{ color: stat.color === 'green' ? '#10B981' : stat.color === 'blue' ? '#3B82F6' : stat.color === 'purple' ? '#8B5CF6' : stat.color === 'orange' ? '#F59E0B' : '#EF4444' }}>
+                        {stat.title}
+                      </h3>
+                      <div className="kpi-value" style={{ color: '#000000' }}>
                         {stat.value}
                       </div>
                       <div className={`kpi-change ${stat.change >= 0 ? 'positive' : 'negative'}`}>
@@ -344,52 +346,70 @@ export default function Home() {
                 ))}
               </div>
 
-              {/* Chart Section - Split into 2 */}
+              {/* Chart Section - Strategic Insights */}
               <div className="charts-grid">
                 <div className="chart-container">
-                  <BarChart 
-                    series={barChartData?.depositData?.series || staticChartData1.series} 
-                    categories={barChartData?.depositData?.categories || staticChartData1.categories} 
-                    title="💰 Deposit Amount Analysis" 
-                    currency={currency}
-                  />
-                </div>
-                <div className="chart-container">
-                  <BarChart 
-                    series={barChartData?.newDepositorData?.series || staticChartData2.series} 
-                    categories={barChartData?.newDepositorData?.categories || staticChartData2.categories} 
-                    title="👥 New Depositor Growth" 
-                    currency={currency}
-                  />
-                </div>
-              </div>
-
-              {/* Line Charts Section - Real Data */}
-              <div className="line-charts-section">
-                <div className="chart-container">
-                  <h3 className="chart-title">📈 Net Profit Trend</h3>
-                  {lineChartData?.netProfitTrend ? (
+                  <h3 className="chart-title">📊 Retention vs Churn Rate Over Time</h3>
+                  {barChartData?.retentionChurnData ? (
                     <LineChart 
-                      series={lineChartData.netProfitTrend.series} 
-                      categories={lineChartData.netProfitTrend.categories} 
-                      title="Net Profit Trend" 
+                      series={[
+                        { name: 'Retention Rate (%)', data: barChartData.retentionChurnData.retentionData },
+                        { name: 'Churn Rate (%)', data: barChartData.retentionChurnData.churnData }
+                      ]} 
+                      categories={barChartData.retentionChurnData.categories} 
+                      title="Retention vs Churn Rate" 
                       currency={currency}
+                      chartType="line"
                     />
                   ) : (
-                    <div className="line-chart-placeholder">Loading real data...</div>
+                    <div className="chart-placeholder">Loading retention data...</div>
                   )}
                 </div>
                 <div className="chart-container">
-                  <h3 className="chart-title">📊 Member Growth Trend</h3>
-                  {lineChartData?.memberGrowthTrend ? (
+                  <h3 className="chart-title">💰 Customer Lifetime Value vs Purchase Frequency</h3>
+                  {barChartData?.clvFrequencyData ? (
                     <LineChart 
-                      series={lineChartData.memberGrowthTrend.series} 
-                      categories={lineChartData.memberGrowthTrend.categories} 
-                      title="Member Growth Trend" 
+                      series={[
+                        { name: 'Customer Lifetime Value', data: barChartData.clvFrequencyData.clvData },
+                        { name: 'Purchase Frequency', data: barChartData.clvFrequencyData.purchaseFreqData }
+                      ]} 
+                      categories={barChartData.clvFrequencyData.categories} 
+                      title="CLV vs Purchase Frequency" 
+                      currency={currency}
+                      chartType="line"
+                    />
+                  ) : (
+                    <div className="chart-placeholder">Loading CLV data...</div>
+                  )}
+                </div>
+              </div>
+
+              {/* Line Charts Section - Strategic Analysis */}
+              <div className="line-charts-section">
+                <div className="chart-container">
+                  <h3 className="chart-title">📈 Growth vs Profitability Analysis</h3>
+                  {lineChartData?.growthProfitabilityTrend ? (
+                    <LineChart 
+                      series={lineChartData.growthProfitabilityTrend.series} 
+                      categories={lineChartData.growthProfitabilityTrend.categories} 
+                      title="Growth vs Profitability Analysis" 
                       currency={currency}
                     />
                   ) : (
-                    <div className="line-chart-placeholder">Loading real data...</div>
+                    <div className="line-chart-placeholder">Loading strategic data...</div>
+                  )}
+                </div>
+                <div className="chart-container">
+                  <h3 className="chart-title">💰 Operational Efficiency Trend</h3>
+                  {lineChartData?.operationalEfficiencyTrend ? (
+                    <LineChart 
+                      series={lineChartData.operationalEfficiencyTrend.series} 
+                      categories={lineChartData.operationalEfficiencyTrend.categories} 
+                      title="Operational Efficiency Trend" 
+                      currency={currency}
+                    />
+                  ) : (
+                    <div className="line-chart-placeholder">Loading efficiency data...</div>
                   )}
                 </div>
               </div>
@@ -424,7 +444,7 @@ export default function Home() {
             border-bottom: 1px solid #e2e8f0;
             box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
             margin: 0 -32px 60px -32px;
-            min-height: 60px;
+            min-height: 100px;
           }
 
           .scrollable-content {
@@ -433,7 +453,7 @@ export default function Home() {
             background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
             overflow-y: auto;
             overflow-x: hidden;
-            height: calc(100vh - 85px);
+            min-height: calc(100vh - 85px);
             scrollbar-width: thin;
             scrollbar-color: #cbd5e0 #f7fafc;
           }
@@ -543,16 +563,39 @@ export default function Home() {
             gap: 24px;
             padding-top: 0;
             margin-top: 0;
-            min-height: calc(100vh - 200px);
+            min-height: 100vh;
+            padding-bottom: 40px;
           }
 
           .kpi-grid-improved {
             display: grid;
             grid-template-columns: repeat(6, 1fr);
-            gap: 16px;
-            margin-top: 40px;
+            gap: 12px;
+            margin-top: 50px;
             margin-bottom: 0px;
             width: 100%;
+          }
+
+          /* Responsive KPI Grid */
+          @media (max-width: 1200px) {
+            .kpi-grid-improved {
+              grid-template-columns: repeat(3, 1fr);
+            }
+          }
+
+          @media (max-width: 768px) {
+            .kpi-grid-improved {
+              grid-template-columns: repeat(2, 1fr);
+              gap: 8px;
+              margin-top: 20px;
+            }
+          }
+
+          @media (max-width: 480px) {
+            .kpi-grid-improved {
+              grid-template-columns: 1fr;
+              gap: 10px;
+            }
           }
 
           .kpi-card-improved {
@@ -597,10 +640,10 @@ export default function Home() {
           }
 
           .kpi-title {
-            font-size: 0.8rem;
+            font-size: 1rem;
             font-weight: 600;
             color: #64748b;
-            margin: 0 0 10px 0;
+            margin: 0 0 12px 0;
             text-transform: uppercase;
             letter-spacing: 0.5px;
             line-height: 1.3;
@@ -610,7 +653,7 @@ export default function Home() {
           }
 
           .kpi-value {
-            font-size: 2rem;
+            font-size:1.8rem;
             font-weight: 700;
             margin: 0 0 8px 0;
             line-height: 1.2;
@@ -646,14 +689,22 @@ export default function Home() {
           .charts-grid {
             display: grid;
             grid-template-columns: 1fr 1fr;
-            gap: 32px;
-            margin-bottom: 32px;
-            margin-top: 20px;
+            gap: 20px;
+            margin-bottom: 0px;
+            margin-top: 0px;
+          }
+
+          /* Responsive Charts Grid */
+          @media (max-width: 1024px) {
+            .charts-grid {
+              grid-template-columns: 1fr;
+              gap: 15px;
+            }
           }
 
           .chart-container {
             background: white;
-            padding: 25px 30px;
+            padding: 24px 28px;
             border-radius: 10px;
             box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
             border: 1px solid #e2e8f0;
@@ -669,16 +720,25 @@ export default function Home() {
             display: grid;
             grid-template-columns: 1fr 1fr;
             gap: 20px;
+            margin-top: 0px;
+          }
+
+          /* Responsive Line Charts Section */
+          @media (max-width: 1024px) {
+            .line-charts-section {
+              grid-template-columns: 1fr;
+              gap: 15px;
+            }
           }
 
           .chart-title {
             font-size: 1.1rem;
             font-weight: 600;
             color: #1e293b;
-            margin: 0 0 16px 0;
+            margin: 0 0 8px 0;
           }
 
-          .line-chart-placeholder {
+          .line-chart-placeholder, .chart-placeholder {
             height: 300px;
             display: flex;
             align-items: center;
@@ -729,11 +789,21 @@ export default function Home() {
 
               .charts-grid, .line-charts-section {
                 grid-template-columns: 1fr;
+                gap: 12px;
+              }
+
+              .chart-container {
+                padding: 16px 20px;
+              }
+
+              .chart-title {
+                font-size: 14px;
+                margin-bottom: 12px;
               }
 
               .scrollable-content {
                 padding: 0 20px 40px 20px;
-                height: calc(100vh - 85px);
+                min-height: calc(100vh - 85px);
               }
             }
 

@@ -18,6 +18,22 @@ a {
   text-decoration: none;
 }
 
+/* FORCE NO SCROLL IN SIDEBAR - BOSS REQUIREMENT */
+.sidebar,
+.sidebar *,
+.nav-menu,
+.nav-menu * {
+  overflow: hidden !important;
+  overflow-x: hidden !important;
+  overflow-y: hidden !important;
+}
+
+/* Only allow scroll in submenu and content */
+.submenu-container {
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+}
+
 /* Dashboard Layout - GLOBAL FIXED LAYOUT */
 .app-layout {
   display: flex;
