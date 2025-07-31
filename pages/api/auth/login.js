@@ -1,6 +1,6 @@
 import bcrypt from 'bcryptjs';
 import jwt from 'jsonwebtoken';
-import { selectData } from '../../../lib/supabase';
+import { createClient } from '@supabase/supabase-js';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
@@ -14,8 +14,14 @@ export default async function handler(req, res) {
       return res.status(400).json({ error: 'Username and password are required' });
     }
 
+    // Create Supabase client directly
+    const supabase = createClient(process.env.SUPABASE_URL, process.env.SUPABASE_SERVICE_ROLE_KEY);
+
     // Get user from Supabase
-    const { data: users, error } = await selectData('users', '*', { username });
+    const { data: users, error } = await supabase
+      .from('users')
+      .select('*')
+      .eq('username', username);
     
     if (error) {
       console.error('❌ Database error:', error);
