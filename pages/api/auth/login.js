@@ -1,53 +1,62 @@
-import pool from '../../../lib/database';
+import bcrypt from 'bcryptjs';
+import jwt from 'jsonwebtoken';
+import { selectData } from '../../../lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method !== 'POST') {
     return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  const { username, password } = req.body;
-
-  if (!username || !password) {
-    return res.status(400).json({ error: 'Username and password required' });
-  }
-
   try {
-    // Cari user berdasarkan username dengan query optimized
-    const userResult = await pool.query(
-      'SELECT id, username, password, role FROM users WHERE username = $1 LIMIT 1',
-      [username]
+    const { username, password } = req.body;
+
+    if (!username || !password) {
+      return res.status(400).json({ error: 'Username and password are required' });
+    }
+
+    // Get user from Supabase
+    const { data: users, error } = await selectData('users', '*', { username });
+    
+    if (error) {
+      console.error('❌ Database error:', error);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (!users || users.length === 0) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    const user = users[0];
+
+    // Verify password
+    const isValidPassword = await bcrypt.compare(password, user.password);
+    
+    if (!isValidPassword) {
+      return res.status(401).json({ error: 'Invalid credentials' });
+    }
+
+    // Create JWT token
+    const token = jwt.sign(
+      { 
+        userId: user.id, 
+        username: user.username, 
+        role: user.role 
+      },
+      process.env.JWT_SECRET || 'your-secret-key',
+      { expiresIn: '24h' }
     );
 
-    if (userResult.rows.length === 0) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    const user = userResult.rows[0];
-
-    // Compare password
-    if (user.password !== password) {
-      return res.status(401).json({ error: 'Invalid credentials' });
-    }
-
-    // Login berhasil, set session cookies
-    res.setHeader('Set-Cookie', [
-      `user_id=${user.id}; Path=/; SameSite=Strict; Max-Age=86400`,
-      `username=${user.username}; Path=/; SameSite=Strict; Max-Age=86400`,
-      `user_role=${user.role || 'user'}; Path=/; SameSite=Strict; Max-Age=86400`
-    ]);
-
+    // Return user data (without password) and token
+    const { password: _, ...userWithoutPassword } = user;
+    
     res.status(200).json({
       success: true,
-      message: 'Login successful',
-      user: {
-        id: user.id,
-        username: user.username,
-        role: user.role || 'user'
-      }
+      user: userWithoutPassword,
+      token
     });
 
   } catch (error) {
-    console.error('Login error:', error.message);
-    res.status(500).json({ error: 'Authentication failed' });
+    console.error('❌ Login error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 } 

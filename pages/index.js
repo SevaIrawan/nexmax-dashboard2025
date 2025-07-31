@@ -20,60 +20,59 @@ export default function Home() {
   const [sidebarExpanded, setSidebarExpanded] = useState(true);
   const router = useRouter();
 
-  // Load dashboard data
+  // OPTIMIZED: Parallel loading untuk smooth performance 🚀
   useEffect(() => {
     if (user) {
       setLoading(true);
       
-      // Fetch current month data from new main-dashboard API
-      fetch(`/api/main-dashboard?currency=${currency}&year=${year}&month=${month}`)
-        .then(res => res.json())
-        .then(data => {
-          console.log('📊 Main Dashboard REAL data loaded:', data);
-          if (data.success) {
-            setDashboardData(data.data);
+      const previousMonth = getPreviousMonth(month);
+      
+      // PARALLEL LOADING - semua API call bersamaan = JAUH LEBIH CEPAT!
+      const fetchPromises = [
+        fetch(`/api/main-dashboard?currency=${currency}&year=${year}&month=${month}`).then(res => res.json()),
+        fetch(`/api/main-dashboard?currency=${currency}&year=${year}&month=${previousMonth}`).then(res => res.json()),
+        fetch(`/api/line-chart-data?currency=${currency}&year=${year}`).then(res => res.json()),
+        fetch(`/api/bar-chart-data?currency=${currency}&year=${year}`).then(res => res.json())
+      ];
+      
+      Promise.all(fetchPromises)
+        .then(([currentData, prevData, chartData, barData]) => {
+          console.log('🚀 PARALLEL LOADING COMPLETED - MUCH FASTER!');
+          
+          // Set current month data
+          if (currentData.success) {
+            setDashboardData(currentData.data);
+            console.log('📊 Current month data loaded:', currentData.data);
           }
           
-          // Fetch previous month data for comparison
-          const previousMonth = getPreviousMonth(month);
-          return fetch(`/api/main-dashboard?currency=${currency}&year=${year}&month=${previousMonth}`);
-        })
-        .then(res => res.json())
-        .then(prevData => {
-          console.log('📊 Previous month data loaded:', prevData);
+          // Set previous month data
           if (prevData.success) {
             setPreviousMonthData(prevData.data);
+            console.log('📊 Previous month data loaded:', prevData.data);
           }
           
-          // Fetch line chart data
-          return fetch(`/api/line-chart-data?currency=${currency}&year=${year}`);
-        })
-        .then(res => res.json())
-        .then(chartData => {
-          console.log('📈 Line chart data loaded:', chartData);
+          // Set line chart data
           if (chartData.success) {
             setLineChartData(chartData);
+            console.log('📈 Line chart data loaded');
           } else {
             console.log('Using fallback data for line charts');
             setLineChartData(chartData.fallbackData || null);
           }
           
-          // Fetch bar chart data
-          return fetch(`/api/bar-chart-data?currency=${currency}&year=${year}`);
-        })
-        .then(res => res.json())
-        .then(barData => {
-          console.log('📊 Bar chart data loaded:', barData);
+          // Set bar chart data
           if (barData.success) {
             setBarChartData(barData);
+            console.log('📊 Bar chart data loaded');
           } else {
             console.log('Using fallback data for bar charts');
             setBarChartData(barData);
           }
+          
           setLoading(false);
         })
         .catch(err => {
-          console.error('Error loading dashboard data:', err);
+          console.error('❌ Error loading dashboard data:', err);
           setLoading(false);
         });
     }
@@ -320,10 +319,47 @@ export default function Home() {
         <main className="scrollable-content">{/* Scrollable content area starts here */}
 
           {loading ? (
-            <div className="loading-container">
-              <div className="loading-spinner">🔄</div>
-              <div>Loading REAL data from member_report_monthly...</div>
+            <>
+              {/* SKELETON LOADING - Smooth experience! */}
+              <div className="kpi-grid-improved">
+                {[1,2,3,4,5,6].map(i => (
+                  <div key={i} className="kpi-card-skeleton">
+                    <div className="skeleton-icon"></div>
+                    <div className="skeleton-content">
+                      <div className="skeleton-title"></div>
+                      <div className="skeleton-value"></div>
+                      <div className="skeleton-change"></div>
             </div>
+                  </div>
+                ))}
+              </div>
+              
+              <div className="charts-grid">
+                <div className="chart-skeleton">
+                  <div className="skeleton-chart-title"></div>
+                  <div className="skeleton-chart-area"></div>
+                </div>
+                <div className="chart-skeleton">
+                  <div className="skeleton-chart-title"></div>
+                  <div className="skeleton-chart-area"></div>
+                </div>
+              </div>
+              
+              <div className="line-charts-section">
+                <div className="chart-skeleton">
+                  <div className="skeleton-chart-title"></div>
+                  <div className="skeleton-chart-area"></div>
+                </div>
+                <div className="chart-skeleton">
+                  <div className="skeleton-chart-title"></div>
+                  <div className="skeleton-chart-area"></div>
+                </div>
+              </div>
+              
+              <div style={{ textAlign: 'center', marginTop: '20px', color: '#64748b' }}>
+                🚀 Loading dashboard data... Please wait
+              </div>
+            </>
           ) : (
             <div className="dashboard-content">
               {/* KPI Cards Grid - Optimized */}
@@ -684,6 +720,99 @@ export default function Home() {
           .kpi-change.negative::before {
             content: "↘";
             font-size: 1rem;
+          }
+
+          /* SKELETON LOADING STYLES - Smooth animations! */
+          @keyframes shimmer {
+            0% { background-position: -468px 0; }
+            100% { background-position: 468px 0; }
+          }
+
+          .kpi-card-skeleton {
+            background: white;
+            border-radius: 8px;
+            padding: 16px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+            border: 1px solid #e2e8f0;
+            min-height: 120px;
+            display: flex;
+            flex-direction: column;
+            justify-content: space-between;
+            position: relative;
+            overflow: hidden;
+          }
+
+          .skeleton-icon {
+            position: absolute;
+            top: 10px;
+            right: 18px;
+            width: 20px;
+            height: 20px;
+            border-radius: 50%;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+          }
+
+          .skeleton-content {
+            flex: 1;
+          }
+
+          .skeleton-title {
+            height: 16px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 12px;
+            width: 70%;
+          }
+
+          .skeleton-value {
+            height: 28px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 8px;
+            width: 85%;
+          }
+
+          .skeleton-change {
+            height: 14px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            width: 60%;
+          }
+
+          .chart-skeleton {
+            background: white;
+            padding: 24px 28px;
+            border-radius: 10px;
+            box-shadow: 0 2px 12px rgba(0, 0, 0, 0.08);
+            border: 1px solid #e2e8f0;
+            min-height: 380px;
+            overflow: hidden;
+          }
+
+          .skeleton-chart-title {
+            height: 18px;
+            background: linear-gradient(90deg, #f0f0f0 25%, #e0e0e0 50%, #f0f0f0 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 4px;
+            margin-bottom: 20px;
+            width: 40%;
+          }
+
+          .skeleton-chart-area {
+            height: 300px;
+            background: linear-gradient(90deg, #f8f9fa 25%, #f0f0f0 50%, #f8f9fa 75%);
+            background-size: 400% 100%;
+            animation: shimmer 1.5s infinite;
+            border-radius: 8px;
           }
 
           .charts-grid {

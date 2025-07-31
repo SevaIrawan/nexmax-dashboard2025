@@ -218,23 +218,18 @@ export default function Users() {
             gap: '16px', 
             alignItems: 'center' 
           }}>
-            <span style={{ color: '#9CA3AF', fontSize: '14px' }}>
-              User management doesn't require slicers
-            </span>
-          </div>
-        </div>
-
-        <main style={{ marginTop: '185px', padding: '24px' }}>
-          <div className="users-header">
-            <div style={{ marginBottom: '20px', color: '#666', fontSize: '0.9rem', display: 'flex', alignItems: 'center', gap: '10px' }}>
-              👤 Logged in as: <strong>{user.username}</strong> ({user.role})
-            </div>
             <button 
               onClick={() => setShowModal(true)}
               className="add-user-btn"
             >
               Add New User
             </button>
+          </div>
+        </div>
+
+        <main style={{ marginTop: '185px', padding: '24px' }}>
+          <div className="users-header">
+            {/* Removed "Logged in as" text and "Add New User" button - moved to sub header */}
           </div>
 
           {/* Add User Modal */}

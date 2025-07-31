@@ -1,4 +1,4 @@
-import pool from '../../../lib/database';
+import { selectData } from '../../../lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
@@ -8,36 +8,31 @@ export default async function handler(req, res) {
   try {
     console.log('🔍 Fetching all users from database...');
     
-    // First check what columns exist in users table
-    const columnsResult = await pool.query(`
-      SELECT column_name 
-      FROM information_schema.columns 
-      WHERE table_name = 'users'
-      ORDER BY ordinal_position
-    `);
+    // Get all users from Supabase
+    const usersData = await selectData('users', '*', {});
     
-    console.log('📋 Available columns:', columnsResult.rows.map(r => r.column_name));
+    // Ensure usersData is an array
+    const usersArray = Array.isArray(usersData) ? usersData : [];
     
-    // Get all users with only existing columns
-    const result = await pool.query(`
-      SELECT 
-        id, 
-        username, 
-        password,
-        role
-      FROM users 
-      ORDER BY id ASC
-    `);
+    if (usersArray.length === 0) {
+      console.log('📋 No users found in database');
+      return res.status(200).json({
+        success: true,
+        users: [],
+        total: 0,
+        message: 'No users found'
+      });
+    }
 
-    console.log(`✅ Found ${result.rows.length} users in database`);
+    console.log(`✅ Found ${usersArray.length} users in database`);
     
     // Format the data for display
-    const users = result.rows.map(user => ({
+    const users = usersArray.map(user => ({
       id: user.id,
       username: user.username,
       password: user.password, // Show actual password for admin management
       role: user.role,
-      created_at: 'Not available' // Column doesn't exist in current database
+      created_at: user.created_at || 'Not available'
     }));
 
     res.status(200).json({

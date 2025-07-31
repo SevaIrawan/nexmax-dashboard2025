@@ -143,87 +143,40 @@ export default function LineChart({ series, categories, title, currency = 'MYR' 
     maintainAspectRatio: false,
     plugins: {
       legend: {
-        position: 'bottom',
-        align: 'center',
-        labels: {
-          padding: 12,
-          usePointStyle: true,
-          font: {
-            size: 12,
-            weight: '600'
-          }
-        }
+        display: false  // HAPUS LEGEND
       },
       tooltip: {
-        mode: 'index',
-        intersect: false,
-        backgroundColor: 'rgba(0, 0, 0, 0.8)',
-        titleColor: '#ffffff',
-        bodyColor: '#ffffff',
-        borderColor: '#e2e8f0',
-        borderWidth: 1,
-        padding: 12,
-        cornerRadius: 8,
-        displayColors: true,
         callbacks: {
           label: function(context) {
-            return context.dataset.label + ': ' + formatFullValue(context.parsed.y, context.dataset.label);
-          },
-          title: function(context) {
-            return 'Month: ' + context[0].label;
+            const value = context.parsed.y;
+            const datasetLabel = context.dataset.label;
+            
+            // For conversion rate - show percentage
+            if (datasetLabel && datasetLabel.toLowerCase().includes('rate')) {
+              return `${datasetLabel}: ${value.toFixed(1)}%`;
+            }
+            
+            // For other values - show plain number
+            return `${datasetLabel}: ${value}`;
           }
         }
       }
-    },
-    interaction: {
-      mode: 'nearest',
-      axis: 'x',
-      intersect: false
     },
     scales: {
-      x: {
-        display: true,
-        grid: {
-          display: false
-        },
-        ticks: {
-          font: {
-            size: 11,
-            weight: '500'
-          },
-          color: '#64748b'
-        }
-      },
       y: {
-        display: true,
-        grid: {
-          color: 'rgba(0, 0, 0, 0.05)',
-          borderDash: [5, 5]
-        },
+        beginAtZero: true,
         ticks: {
-          font: {
-            size: 11,
-            weight: '500'
-          },
-          color: '#64748b',
           callback: function(value) {
-            // Detect if this chart is for count/integer type based on title
-            const isCountChart = title && (
-              title.toLowerCase().includes('member') ||
-              title.toLowerCase().includes('growth') ||
-              title.toLowerCase().includes('unique') ||
-              title.toLowerCase().includes('user') ||
-              title.toLowerCase().includes('count')
-            ) && !title.toLowerCase().includes('avg') && !title.toLowerCase().includes('ggr');
-            return formatValue(value, isCountChart ? 'count' : 'amount');
+            // Check series name for percentage
+            const firstSeries = series && series[0];
+            if (firstSeries && firstSeries.name && firstSeries.name.toLowerCase().includes('rate')) {
+              return value + '%';
+            }
+            
+            // For other values - plain numbers
+            return value;
           }
         }
-      }
-    },
-    elements: {
-      line: {
-        borderCapStyle: 'round',
-        borderJoinStyle: 'round'
       }
     }
   };

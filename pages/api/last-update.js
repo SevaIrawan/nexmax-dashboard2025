@@ -1,66 +1,63 @@
-import pool from '../../lib/database';
+import { selectData } from '../../lib/supabase';
 
 export default async function handler(req, res) {
   if (req.method !== 'GET') {
-    return res.status(405).json({ success: false, message: 'Method not allowed' });
+    return res.status(405).json({ error: 'Method not allowed' });
   }
 
-  let client;
   try {
-    client = await pool.connect();
-    console.log('⚡ FAST Last Update query...');
-    
-    // OPTIMIZED QUERY: Based on audit results, we know 2025-07-23 is the latest
-    // Simple and FAST query for production use
-    const lastUpdateQuery = `
-      SELECT '2025-07-23' as latest_date, 'VERIFIED_LATEST' as source
-      UNION ALL
-      SELECT date as latest_date, 'LIVE_CHECK' as source
-      FROM member_report_monthly 
-      WHERE date = '2025-07-23'
-      LIMIT 1
-    `;
-    
-    const result = await client.query(lastUpdateQuery);
-    
-    if (result.rows.length > 0) {
-      const latestDate = '2025-07-23'; // VERIFIED from comprehensive audit
-      
-      // Fast parsing for YYYY-MM-DD format
-      const dateObj = new Date(latestDate + 'T00:00:00');
-      const formattedDate = dateObj.toLocaleDateString('en-US', {
-        month: 'short',
-        day: 'numeric',
-        year: 'numeric'
-      });
-      
-      console.log(`✅ FAST result: ${latestDate} → ${formattedDate}`);
-      
+    // Get all dates from member_report_daily and find the latest
+    const { data: memberData, error } = await selectData(
+      'member_report_daily',
+      'date'
+    );
+
+    if (error) {
+      console.error('❌ Error fetching last update:', error);
+      return res.status(500).json({ error: 'Database error' });
+    }
+
+    if (!memberData || memberData.length === 0) {
+      console.log('⚠️ No data found in member_report_daily');
       return res.status(200).json({
-        last_update: `🔄 Data Updated: ${formattedDate}`,
-        source: 'optimized_verified',
-        raw_date: latestDate
+        success: true,
+        lastUpdate: {
+          date: null,
+          formattedDate: 'No data available',
+          totalRecords: 0
+        }
       });
     }
 
-    // Fallback only if needed
-    return res.status(200).json({
-      last_update: `🔄 Data Updated: Jul 23, 2025`,
-      source: 'hardcoded_fallback',
-      raw_date: '2025-07-23'
+    // Find the latest date
+    const dates = memberData.map(row => new Date(row.date));
+    const latestDate = new Date(Math.max(...dates));
+    const totalRecords = memberData.length;
+
+    // Format date for display
+    const formattedDate = latestDate.toLocaleDateString('en-US', {
+      month: 'short',
+      day: 'numeric',
+      year: 'numeric'
+    });
+
+    console.log('✅ Last update fetched successfully:', {
+      date: latestDate.toISOString(),
+      formattedDate,
+      totalRecords
+    });
+
+    res.status(200).json({
+      success: true,
+      lastUpdate: {
+        date: latestDate.toISOString(),
+        formattedDate,
+        totalRecords
+      }
     });
 
   } catch (error) {
-    console.error('❌ Database error:', error.message);
-    // Even if DB fails, we know the correct answer from audit
-    return res.status(200).json({
-      last_update: `🔄 Data Updated: Jul 23, 2025`,
-      source: 'verified_fallback',
-      raw_date: '2025-07-23'
-    });
-  } finally {
-    if (client) {
-      client.release();
-    }
+    console.error('❌ Last update API error:', error);
+    res.status(500).json({ error: 'Internal server error' });
   }
 } 

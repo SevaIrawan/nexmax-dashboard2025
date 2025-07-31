@@ -1,0 +1,183 @@
+/**
+ * Centralized Submenu Scroll Styles
+ * Mengatur scroll untuk semua sub menu di sidebar secara terpusat
+ */
+
+/* STANDARD SUBMENU CONTAINER */
+.submenu-container {
+  /* Layout & Positioning */
+  background: rgba(0,0,0,0.2);
+  border-left: 2px solid #667eea;
+  margin-left: 20px;
+  padding-left: 15px;
+  margin-top: 5px;
+  margin-bottom: 20px; /* INCREASED FROM 10px TO 20px */
+  display: block;
+  visibility: visible;
+  opacity: 1;
+  
+  /* Standard Height - Desktop - INCREASED FROM 180px TO 250px */
+  max-height: 250px;
+  
+  /* Scroll Configuration */
+  overflow-y: auto !important;
+  overflow-x: hidden !important;
+  scrollbar-width: thin !important;
+  scrollbar-color: #667eea #1a202c !important;
+  -ms-overflow-style: auto !important;
+  
+  /* Smooth Scrolling */
+  scroll-behavior: smooth;
+  
+  /* Transition */
+  transition: all 0.3s ease;
+}
+
+/* Webkit Scrollbar Styling */
+.submenu-container::-webkit-scrollbar {
+  display: block !important;
+  width: 6px !important;
+}
+
+.submenu-container::-webkit-scrollbar-track {
+  background: rgba(0,0,0,0.1);
+  border-radius: 3px;
+}
+
+.submenu-container::-webkit-scrollbar-thumb {
+  background: rgba(102, 126, 234, 0.6);
+  border-radius: 3px;
+  transition: background 0.2s ease;
+}
+
+.submenu-container::-webkit-scrollbar-thumb:hover {
+  background: rgba(102, 126, 234, 0.8);
+}
+
+/* RESPONSIVE HEIGHT ADJUSTMENTS */
+@media (max-width: 768px) {
+  .submenu-container {
+    max-height: 200px !important; /* INCREASED FROM 150px TO 200px */
+    margin-bottom: 15px !important; /* ADDED MARGIN BOTTOM */
+  }
+}
+
+@media (max-width: 480px) {
+  .submenu-container {
+    max-height: 180px !important; /* INCREASED FROM 120px TO 180px */
+    margin-bottom: 15px !important; /* ADDED MARGIN BOTTOM */
+  }
+}
+
+@media (max-height: 600px) {
+  .submenu-container {
+    max-height: 150px !important; /* INCREASED FROM 100px TO 150px */
+    margin-bottom: 15px !important; /* ADDED MARGIN BOTTOM */
+  }
+}
+
+/* SUBMENU CONTENT STYLING */
+.submenu {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: block;
+  visibility: visible;
+}
+
+.submenu li {
+  margin-bottom: 4px;
+  display: block;
+  visibility: visible;
+}
+
+.submenu a {
+  display: flex;
+  align-items: center;
+  padding: 8px 20px;
+  color: #94a3b8;
+  text-decoration: none;
+  transition: all 0.2s ease;
+  visibility: visible;
+}
+
+.submenu a:hover {
+  background: rgba(255,255,255,0.05);
+  color: white;
+}
+
+.submenu a.active {
+  background: rgba(102, 126, 234, 0.3);
+  color: white;
+}
+
+.sub-icon {
+  width: 20px;
+  text-align: center;
+  color: #667eea;
+  visibility: visible;
+}
+
+.sub-label {
+  margin-left: 8px;
+  font-size: 0.9rem;
+  visibility: visible;
+}
+
+/* SIDEBAR MAIN CONTAINER - NO SCROLL */
+.sidebar {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.sidebar::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* NAVIGATION MENU - NO SCROLL */
+.nav-menu {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.nav-menu::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* LAST UPDATE SECTION - NO SCROLL */
+.last-update-section {
+  overflow: hidden !important;
+  scrollbar-width: none !important;
+  -ms-overflow-style: none !important;
+}
+
+.last-update-section::-webkit-scrollbar {
+  display: none !important;
+  width: 0 !important;
+}
+
+/* UTILITY CLASSES */
+.submenu-scroll-active {
+  /* Class untuk menandakan scroll aktif */
+  box-shadow: inset 0 0 0 1px rgba(102, 126, 234, 0.3);
+}
+
+.submenu-scroll-inactive {
+  /* Class untuk menandakan scroll tidak aktif */
+  box-shadow: none;
+}
+
+/* ANIMATION FOR SCROLL INDICATOR */
+@keyframes scrollPulse {
+  0% { opacity: 0.6; }
+  50% { opacity: 1; }
+  100% { opacity: 0.6; }
+}
+
+.submenu-container:hover::-webkit-scrollbar-thumb {
+  animation: scrollPulse 2s infinite;
+} 

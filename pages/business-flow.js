@@ -1,40 +1,289 @@
-import { useState, useEffect } from 'react';
-import { useRoleAccess } from '../hooks/useRoleAccess';
+import { useState } from 'react';
 import Sidebar from '../components/Sidebar';
 import Header from '../components/Header';
+import { Line, Bar, Doughnut } from 'react-chartjs-2';
+import {
+  Chart as ChartJS,
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend,
+} from 'chart.js';
+
+ChartJS.register(
+  CategoryScale,
+  LinearScale,
+  PointElement,
+  LineElement,
+  BarElement,
+  ArcElement,
+  Title,
+  Tooltip,
+  Legend
+);
 
 export default function BusinessFlow() {
-  const { user, loading: authLoading } = useRoleAccess('/business-flow');
-  const [sidebarExpanded, setSidebarExpanded] = useState(true);
+  const [year, setYear] = useState('2025');
+  const [month, setMonth] = useState('July');
+  const [currency, setCurrency] = useState('MYR');
 
-  if (authLoading) {
-    return <div>Loading...</div>;
-  }
+  // Chart data configurations
+  const ppcLineData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    datasets: [
+      {
+        label: 'Conversion Rate (%)',
+        data: [4.2, 3.8, 2.1, 3.9, 6.2, 6.5, 4.8],
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        tension: 0.4,
+      },
+    ],
+  };
 
-  if (!user) {
-    return null;
-  }
+  const ppcBarData1 = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    datasets: [
+      {
+        label: 'New Customers',
+        data: [40, 35, 25, 30, 150, 140, 65],
+        backgroundColor: '#f093fb',
+      },
+    ],
+  };
+
+  const ppcBarData2 = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    datasets: [
+      {
+        label: 'Group Join Volume',
+        data: [1100, 1050, 1000, 1200, 2300, 2200, 1350],
+        backgroundColor: '#4facfe',
+      },
+    ],
+  };
+
+  const firstDepositorLineData = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    datasets: [
+      {
+        label: 'Deposit Rate (%)',
+        data: [25, 28, 30, 32, 35, 33, 24],
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const firstDepositorBarData1 = {
+    labels: ['In Group', 'Not In Group'],
+    datasets: [
+      {
+        label: 'Deposit Rate (%)',
+        data: [24.22, 11.80],
+        backgroundColor: ['#667eea', '#f093fb'],
+      },
+    ],
+  };
+
+  const firstDepositorBarData2 = {
+    labels: ['In Group', 'Not In Group'],
+    datasets: [
+      {
+        label: 'Customer Count',
+        data: [78, 65],
+        backgroundColor: ['#4facfe', '#10b981'],
+      },
+    ],
+  };
+
+  const oldMemberBarData1 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'Customer Count',
+        data: [900, 800, 600, 400, 1400],
+        backgroundColor: '#667eea',
+      },
+    ],
+  };
+
+  const oldMemberBarData2 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'Upgraded Members',
+        data: [110, 80, 50, 30, 10],
+        backgroundColor: '#f093fb',
+      },
+    ],
+  };
+
+  const oldMemberBarData3 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'Churned Members',
+        data: [70, 30, 20, 15, 5],
+        backgroundColor: '#ef4444',
+      },
+    ],
+  };
+
+  const oldMemberLineData1 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'Engagement Rate',
+        data: [0.75, 0.82, 0.88, 0.92, 0.95],
+        borderColor: '#667eea',
+        backgroundColor: 'rgba(102, 126, 234, 0.1)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const oldMemberLineData2 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'NPS Score',
+        data: [65, 72, 78, 85, 92],
+        borderColor: '#f093fb',
+        backgroundColor: 'rgba(240, 147, 251, 0.1)',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const oldMemberBarData4 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'Upgrade Rate (%)',
+        data: [12, 8, 6, 4, 1],
+        backgroundColor: '#4facfe',
+      },
+    ],
+  };
+
+  const oldMemberLineData3 = {
+    labels: ['Jan', 'Feb', 'Mar', 'Apr', 'May', 'Jun', 'Jul'],
+    datasets: [
+      {
+        label: 'Bronze',
+        data: [8, 7, 6, 5, 4, 3, 2],
+        borderColor: '#ef4444',
+        tension: 0.4,
+      },
+      {
+        label: 'Silver',
+        data: [6, 5, 4, 3, 2, 1, 0.5],
+        borderColor: '#f97316',
+        tension: 0.4,
+      },
+      {
+        label: 'Gold',
+        data: [4, 3, 2, 1, 0.5, 0.3, 0.1],
+        borderColor: '#eab308',
+        tension: 0.4,
+      },
+      {
+        label: 'Platinum',
+        data: [3, 2, 1, 0.5, 0.3, 0.1, 0.05],
+        borderColor: '#10b981',
+        tension: 0.4,
+      },
+      {
+        label: 'Diamond',
+        data: [1, 0.5, 0.3, 0.1, 0.05, 0.02, 0.01],
+        borderColor: '#3b82f6',
+        tension: 0.4,
+      },
+    ],
+  };
+
+  const trafficBarData1 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'Reactivation Rate',
+        data: [0.65, 0.75, 0.85, 0.92, 0.98],
+        backgroundColor: '#667eea',
+      },
+    ],
+  };
+
+  const trafficBarData2 = {
+    labels: ['Bronze', 'Silver', 'Gold', 'Platinum', 'Diamond'],
+    datasets: [
+      {
+        label: 'Reactivated Customers',
+        data: [65, 95, 105, 315, 395],
+        backgroundColor: '#f093fb',
+      },
+    ],
+  };
+
+  const trafficDonutData = {
+    labels: ['Successful', 'Failed'],
+    datasets: [
+      {
+        data: [80.49, 19.51],
+        backgroundColor: ['#10b981', '#ef4444'],
+        borderWidth: 0,
+      },
+    ],
+  };
+
+  const chartOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+      },
+    },
+    scales: {
+      y: {
+        beginAtZero: true,
+      },
+    },
+  };
+
+  const donutOptions = {
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: {
+        position: 'bottom',
+      },
+    },
+  };
 
   return (
-    <div className="dashboard-container">
-      <Sidebar 
-        user={user} 
-        onExpandedChange={setSidebarExpanded}
-      />
+    <div className="business-flow-page">
+      <Sidebar user={{ username: 'admin' }} />
       
-      <div className={`dashboard-content ${sidebarExpanded ? 'sidebar-expanded' : 'sidebar-collapsed'}`}>
+      <div className="business-flow-main">
         <Header 
           title="Business Flow"
-          user={user}
-          sidebarExpanded={sidebarExpanded}
-          setSidebarExpanded={setSidebarExpanded}
+          user={{ username: 'admin' }}
+          sidebarExpanded={true}
+          setSidebarExpanded={() => {}}
         />
-
-        {/* SUB HEADER - STANDARD SIZE */}
+        
+        {/* SUB HEADER WITH SLICERS - STANDARD SIZE - NO SCROLL */}
         <div style={{
           position: 'fixed',
           top: '85px',
-          left: sidebarExpanded ? '0px' : '0px',
+          left: '0px',
           right: '0',
           minHeight: '100px',
           background: 'white',
@@ -50,121 +299,624 @@ export default function BusinessFlow() {
         }}>
           <div style={{ 
             margin: 0, 
-            fontSize: '1.5rem', 
-            fontWeight: '700',
+            fontSize: '1.2rem', 
+            fontWeight: '600',
             color: '#1e293b'
           }}>
-            {/* Title removed - only in Header */}
+            
           </div>
           
           <div style={{ 
             display: 'flex', 
             gap: '16px', 
-            alignItems: 'center' 
+            alignItems: 'center',
+            flexWrap: 'wrap'
           }}>
-            <span style={{ color: '#9CA3AF', fontSize: '14px' }}>
-              Slicers will be configured when page is developed
-            </span>
+            {/* YEAR SLICER */}
+            <select
+              value={year}
+              onChange={(e) => setYear(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid #d1d5db',
+                fontSize: '14px',
+                fontWeight: '500',
+                backgroundColor: 'white',
+                color: '#000',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="2024">2024</option>
+              <option value="2025">2025</option>
+            </select>
+
+            {/* CURRENCY SLICER */}
+            <select
+              value={currency}
+              onChange={(e) => setCurrency(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid #d1d5db',
+                fontSize: '14px',
+                fontWeight: '500',
+                backgroundColor: 'white',
+                color: '#000',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="MYR">MYR</option>
+              <option value="SGD">SGD</option>
+              <option value="USD">USD</option>
+            </select>
+
+            {/* MONTH SLICER */}
+            <select
+              value={month}
+              onChange={(e) => setMonth(e.target.value)}
+              style={{
+                padding: '8px 12px',
+                borderRadius: '6px',
+                border: '1px solid #d1d5db',
+                fontSize: '14px',
+                fontWeight: '500',
+                backgroundColor: 'white',
+                color: '#000',
+                cursor: 'pointer'
+              }}
+            >
+              <option value="January">January</option>
+              <option value="February">February</option>
+              <option value="March">March</option>
+              <option value="April">April</option>
+              <option value="May">May</option>
+              <option value="June">June</option>
+              <option value="July">July</option>
+              <option value="August">August</option>
+              <option value="September">September</option>
+              <option value="October">October</option>
+              <option value="November">November</option>
+              <option value="December">December</option>
+            </select>
           </div>
         </div>
 
-        {/* CONTENT */}
-        <div style={{ marginTop: '185px', padding: '24px' }}>
-          <div className="coming-soon-container">
-            <div className="coming-soon-card">
-              <div className="icon-large">🔄</div>
-              <h1>Business Flow</h1>
-              <p>Business Flow dashboard with strategic modules.</p>
-              <div className="features-list">
-                <div className="feature-item">📊 PPC Service</div>
-                <div className="feature-item">👤 First Depositor</div>
-                <div className="feature-item">👥 Old Member</div>
-                <div className="feature-item">🚀 Traffic Executive</div>
+        <div className="modules-container">
+          {/* MODULE 1: PPC Service */}
+          <div className="module-section">
+            <div className="module-header">
+              <h2 className="module-title">PPC Service Module</h2>
+              <p className="module-subtitle">New customer acquisition and group join metrics</p>
+            </div>
+            
+            <div className="module-content">
+              <div className="kpi-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#667eea' }}>NEW CUSTOMER CONVERSION RATE</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>4.83%</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -28.23% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#f093fb' }}>TOTAL NEW CUSTOMERS</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>65</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -47.58% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#4facfe' }}>CUSTOMER GROUP JOIN VOLUME</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>1,357</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -26.73% vs Last Month</div>
+                  </div>
+                </div>
               </div>
-              <div className="status-badge">Ready for Development</div>
+              
+              <div className="charts-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Line data={ppcLineData} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Bar data={ppcBarData1} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Bar data={ppcBarData2} options={chartOptions} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* MODULE 2: First Depositor */}
+          <div className="module-section">
+            <div className="module-header">
+              <h2 className="module-title">First Depositor Module</h2>
+              <p className="module-subtitle">2nd deposit rates comparison between group and non-group members</p>
+            </div>
+            
+            <div className="module-content">
+              <div className="kpi-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#667eea' }}>2ND DEPOSIT RATE (IN GROUP)</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>24.22%</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -15.31% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#f093fb' }}>2ND DEPOSITS (IN GROUP)</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>78</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -51.25% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#4facfe' }}>2ND DEPOSIT RATE (NOT IN GROUP)</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>11.80%</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -28.53% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#10b981' }}>2ND DEPOSITS (NOT IN GROUP)</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>65</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -47.58% vs Last Month</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="charts-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Line data={firstDepositorLineData} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Bar data={firstDepositorBarData1} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Bar data={firstDepositorBarData2} options={chartOptions} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* MODULE 3: Old Member */}
+          <div className="module-section">
+            <div className="module-header">
+              <h2 className="module-title">Old Member Module</h2>
+              <p className="module-subtitle">Engagement, NPS, upgrade and churn metrics by tier</p>
+            </div>
+            
+            <div className="module-content">
+              {/* Row 1: 2 StatCard */}
+              <div className="kpi-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#667eea' }}>TOTAL UPGRADED MEMBERS</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>188</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -16.27% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#f093fb' }}>TOTAL CHURNED MEMBERS</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>128</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -12.91% vs Last Month</div>
+                  </div>
+                </div>
+              </div>
+              
+              {/* Row 2: 3 Bar Chart */}
+              <div className="charts-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(3, 1fr)', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '250px'
+                  }}>
+                    <Bar data={oldMemberBarData1} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '250px'
+                  }}>
+                    <Bar data={oldMemberBarData2} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '250px'
+                  }}>
+                    <Bar data={oldMemberBarData3} options={chartOptions} />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Row 3: 2 Line Chart */}
+              <div className="charts-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '250px'
+                  }}>
+                    <Line data={oldMemberLineData1} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '250px'
+                  }}>
+                    <Line data={oldMemberLineData2} options={chartOptions} />
+                  </div>
+                </div>
+              </div>
+              
+              {/* Row 4: 1 Bar Chart + 1 Line Chart */}
+              <div className="charts-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(2, 1fr)', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Bar data={oldMemberBarData4} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Line data={oldMemberLineData3} options={chartOptions} />
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* MODULE 4: Traffic Executive */}
+          <div className="module-section">
+            <div className="module-header">
+              <h2 className="module-title">Traffic Executive Module</h2>
+              <p className="module-subtitle">Customer reactivation and transfer success metrics</p>
+            </div>
+            
+            <div className="module-content">
+              <div className="kpi-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#667eea' }}>CUSTOMER TRANSFER SUCCESS RATE</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>80.49%</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -7.27% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#f093fb' }}>TARGET COMPLETION</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>94.70%</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -5.30% vs Last Month</div>
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0'
+                  }}>
+                    <h4 style={{ margin: '0 0 10px 0', color: '#4facfe' }}>TOTAL REACTIVATED CUSTOMERS</h4>
+                    <div style={{ fontSize: '2rem', fontWeight: 'bold', color: '#1e293b' }}>978</div>
+                    <div style={{ color: '#ef4444', fontSize: '0.9rem' }}>↘️ -23.65% vs Last Month</div>
+                  </div>
+                </div>
+              </div>
+              
+              <div className="charts-section">
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', 
+                  gap: '20px' 
+                }}>
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Bar data={trafficBarData1} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Bar data={trafficBarData2} options={chartOptions} />
+                  </div>
+                  
+                  <div style={{
+                    background: 'white',
+                    padding: '20px',
+                    borderRadius: '8px',
+                    boxShadow: '0 2px 4px rgba(0,0,0,0.1)',
+                    border: '1px solid #e2e8f0',
+                    height: '300px'
+                  }}>
+                    <Doughnut data={trafficDonutData} options={donutOptions} />
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
       </div>
 
       <style jsx>{`
-        .dashboard-container {
+        .business-flow-page {
           display: flex;
-          min-height: 100vh;
-          background: #f8f9fa;
+          height: 100vh;
+          background: #f8fafc;
         }
-        
-        .dashboard-content {
+
+        .business-flow-main {
           flex: 1;
+          display: flex;
+          flex-direction: column;
+          overflow: hidden;
+          margin-left: 280px;
           transition: margin-left 0.3s ease;
         }
-        
-        .sidebar-expanded {
-          margin-left: 280px;
+
+        .modules-container {
+          flex: 1;
+          overflow-y: auto;
+          padding: 24px;
+          background: linear-gradient(135deg, #f8fafc 0%, #e2e8f0 100%);
+          margin-top: 185px;
         }
-        
-        .sidebar-collapsed {
-          margin-left: 75px;
-        }
-        
-        .coming-soon-container {
-          display: flex;
-          justify-content: center;
-          align-items: center;
-          min-height: 400px;
-        }
-        
-        .coming-soon-card {
+
+        .module-section {
           background: white;
           border-radius: 12px;
-          padding: 48px;
-          text-align: center;
-          box-shadow: 0 4px 15px rgba(0, 0, 0, 0.1);
-          max-width: 500px;
+          box-shadow: 0 4px 6px rgba(0, 0, 0, 0.05);
+          margin-bottom: 32px;
+          overflow: hidden;
+          transition: all 0.3s ease;
         }
-        
-        .icon-large {
-          font-size: 4rem;
-          margin-bottom: 24px;
+
+        .module-section:hover {
+          box-shadow: 0 8px 25px rgba(0, 0, 0, 0.1);
+          transform: translateY(-2px);
         }
-        
-        .coming-soon-card h1 {
-          font-size: 2rem;
-          margin: 0 0 16px 0;
-          color: #1f2937;
+
+        .module-header {
+          background: white;
+          color: #1e293b;
+          padding: 24px;
+          position: relative;
+          overflow: hidden;
+          border-bottom: 1px solid #e2e8f0;
         }
-        
-        .coming-soon-card p {
-          font-size: 1.1rem;
-          color: #6b7280;
-          margin: 0 0 32px 0;
+
+        .module-title {
+          font-size: 1.5rem;
+          font-weight: 700;
+          margin: 0 0 8px 0;
+          position: relative;
+          z-index: 1;
+          color: #1e293b;
         }
-        
-        .features-list {
-          display: grid;
-          grid-template-columns: 1fr 1fr;
-          gap: 12px;
+
+        .module-subtitle {
+          font-size: 0.9rem;
+          opacity: 0.7;
+          margin: 0;
+          position: relative;
+          z-index: 1;
+          color: #64748b;
+        }
+
+        .module-content {
+          padding: 24px;
+        }
+
+        .kpi-section {
           margin-bottom: 32px;
         }
-        
-        .feature-item {
-          padding: 12px;
-          background: #f8f9fa;
-          border-radius: 8px;
-          font-weight: 500;
-          color: #374151;
+
+        .charts-section {
+          margin-bottom: 32px;
         }
-        
-        .status-badge {
-          display: inline-block;
-          background: #10b981;
-          color: white;
-          padding: 8px 24px;
-          border-radius: 20px;
-          font-weight: 600;
-          font-size: 0.9rem;
+
+        /* Responsive Design */
+        @media (max-width: 768px) {
+          .business-flow-main {
+            margin-left: 75px;
+          }
+          
+          .modules-container {
+            padding: 16px;
+          }
         }
       `}</style>
     </div>
   );
-} 
+}

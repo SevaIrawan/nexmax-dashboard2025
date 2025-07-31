@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { useRouter } from 'next/router';
 import Image from 'next/image';
 import { useLastUpdate } from '../hooks/useLastUpdate';
-import { getVisibleMenuItems } from '../lib/roles';
 
 export default function Sidebar({ user, onExpandedChange }) {
   const [isExpanded, setIsExpanded] = useState(true); // DEFAULT EXPANDABLE
@@ -53,122 +52,82 @@ export default function Sidebar({ user, onExpandedChange }) {
     setExpandedSubmenu(current => current === menuKey ? null : menuKey);
   };
 
-  // PROPER ROLE-BASED MENU LOGIC - EXACTLY AS BOSS REQUESTED
-  const getMenuForRole = (userRole) => {
-    if (!userRole) return [];
-    
-    const role = userRole.toLowerCase();
-    
-    // 1. Admin = All Access + User Management
-    if (role === 'admin') {
-      return [
-        { path: '/', name: 'Overview', icon: '📊' },
-        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
-        { path: '/business-flow', name: 'Business Flow', icon: '🔄' },
-        { path: '/bgo', name: 'BGO', icon: '🎯' },
-        { path: '/os', name: 'OS', icon: '⚙️' },
-        { path: '/sr', name: 'SR', icon: '📋' },
-        { path: '/xoo', name: 'XOO', icon: '🔧' },
-        { 
-          name: 'Transaction', 
-          icon: '💰', 
-          subItems: [
-            { path: '/transaction/deposit', name: 'Deposit', icon: '💰' },
-            { path: '/transaction/withdraw', name: 'Withdraw', icon: '💸' },
-            { path: '/transaction/exchange', name: 'Exchange', icon: '🔄' },
-            { path: '/transaction/headcount', name: 'Headcount', icon: '👥' },
-            { path: '/transaction/adjustment', name: 'Adjustment', icon: '⚖️' },
-            { path: '/transaction/vip-program', name: 'VIP Program', icon: '👑' },
-            { path: '/transaction/new-depositor', name: 'New Depositor', icon: '🆕' },
-            { path: '/transaction/member-report', name: 'Member Report', icon: '📊' }
-          ]
-        },
-        { path: '/users', name: 'User Management', icon: '👤' }
-      ];
+  const menuItems = [
+    { 
+      key: 'overview',
+      icon: '📊', 
+      label: 'Overview', 
+      href: '/',
+      isActive: router.pathname === '/'
+    },
+    { 
+      key: 'strategic',
+      icon: '🎯', 
+      label: 'Strategic Executive', 
+      href: '/strategic-executive',
+      isActive: router.pathname === '/strategic-executive'
+    },
+    { 
+      key: 'business',
+      icon: '💼', 
+      label: 'Business Flow', 
+      href: '/business-flow',
+      isActive: router.pathname === '/business-flow'
+    },
+    { 
+      key: 'bgo',
+      icon: '🚀', 
+      label: 'BGO', 
+      href: '/bgo',
+      isActive: router.pathname === '/bgo'
+    },
+    { 
+      key: 'sr',
+      icon: '📋', 
+      label: 'S&R', 
+      href: '/sr',
+      isActive: router.pathname === '/sr'
+    },
+    { 
+      key: 'xoo',
+      icon: '🔄', 
+      label: 'XOO', 
+      href: '/xoo',
+      isActive: router.pathname === '/xoo'
+    },
+    { 
+      key: 'os',
+      icon: '⚙️', 
+      label: 'OS', 
+      href: '/os',
+      isActive: router.pathname === '/os'
+    },
+    { 
+      key: 'transaction',
+      icon: '💳', 
+      label: 'Transaction', 
+      href: '#',
+      hasSubmenu: true,
+      isActive: router.pathname.startsWith('/transaction'),
+      submenu: [
+        { label: 'Deposit Transaction', href: '/transaction/deposit' },
+        { label: 'Withdraw Transaction', href: '/transaction/withdraw' },
+        { label: 'Exchange', href: '/transaction/exchange' },
+        { label: 'Headcount', href: '/transaction/headcount' },
+        { label: 'New Register', href: '/transaction/new-register' },
+        { label: 'New Depositor', href: '/transaction/new-depositor' },
+        { label: 'Adjustment', href: '/transaction/adjustment' },
+        { label: 'VIP Program', href: '/transaction/vip-program' }
+      ]
+    },
+    { 
+      key: 'users',
+      icon: '👤', 
+      label: 'User Management', 
+      href: '/users',
+      isActive: router.pathname === '/users'
     }
-    
-    // 2. Manager = Limited Access (Overview, Strategic Executive, Business Flow)
-    if (role === 'manager') {
-      return [
-        { path: '/', name: 'Overview', icon: '📊' },
-        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
-        { path: '/business-flow', name: 'Business Flow', icon: '🔄' }
-      ];
-    }
-    
-    // 3. Executive = Limited Access (Overview, Strategic Executive, Business Flow)
-    if (role === 'executive') {
-      return [
-        { path: '/', name: 'Overview', icon: '📊' },
-        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
-        { path: '/business-flow', name: 'Business Flow', icon: '🔄' }
-      ];
-    }
-    
-    // 4. & 5. Operator/User = All pages except User Management
-    if (role === 'operator' || role === 'user') {
-      return [
-        { path: '/', name: 'Overview', icon: '📊' },
-        { path: '/strategic-executive', name: 'Strategic Executive', icon: '📈' },
-        { path: '/business-flow', name: 'Business Flow', icon: '🔄' },
-        { path: '/bgo', name: 'BGO', icon: '🎯' },
-        { path: '/os', name: 'OS', icon: '⚙️' },
-        { path: '/sr', name: 'SR', icon: '📋' },
-        { path: '/xoo', name: 'XOO', icon: '🔧' },
-        { 
-          name: 'Transaction', 
-          icon: '💰', 
-          subItems: [
-            { path: '/transaction/deposit', name: 'Deposit', icon: '💰' },
-            { path: '/transaction/withdraw', name: 'Withdraw', icon: '💸' },
-            { path: '/transaction/exchange', name: 'Exchange', icon: '🔄' },
-            { path: '/transaction/headcount', name: 'Headcount', icon: '👥' },
-            { path: '/transaction/adjustment', name: 'Adjustment', icon: '⚖️' },
-            { path: '/transaction/vip-program', name: 'VIP Program', icon: '👑' },
-            { path: '/transaction/new-depositor', name: 'New Depositor', icon: '🆕' },
-            { path: '/transaction/member-report', name: 'Member Report', icon: '📊' }
-          ]
-        }
-        // NO USER MANAGEMENT for Operator/User
-      ];
-    }
-    
-    // Default fallback
-    return [
-      { path: '/', name: 'Overview', icon: '📊' }
-    ];
-  };
-
-  const menuItemsToShow = user ? getMenuForRole(user.role) : [];
-
-  // Convert role-based menu items to sidebar format
-  const menuItems = menuItemsToShow.map(item => {
-    if (item.subItems) {
-      // Transaction menu with submenu
-      return {
-        key: 'transaction',
-        icon: item.icon,
-        label: item.name,
-        href: '#',
-        hasSubmenu: true,
-        isActive: router.pathname.startsWith('/transaction'),
-        submenu: item.subItems.map(subItem => ({
-          label: subItem.name,
-          href: subItem.path
-        }))
-      };
-    } else {
-      // Regular menu item
-      const key = item.path === '/' ? 'overview' : item.path.replace('/', '');
-      return {
-        key: key,
-        icon: item.icon,
-        label: item.name,
-        href: item.path,
-        isActive: router.pathname === item.path
-      };
-    }
-  });
+  ];
 
   return (
     <>
@@ -272,7 +231,7 @@ export default function Sidebar({ user, onExpandedChange }) {
             {isExpanded && (
               <div className="update-content">
                 <span className="update-text-single">
-                  {lastUpdateLoading ? 'Loading...' : `LAST UPDATE: ${formatLastUpdate(lastUpdate).replace('🔄 Data Updated: ', '')}`}
+                  {lastUpdateLoading ? 'Loading...' : `LAST UPDATE: ${lastUpdate.formattedDate || 'Jul 28, 2025'}`}
                 </span>
               </div>
             )}
@@ -307,14 +266,7 @@ export default function Sidebar({ user, onExpandedChange }) {
           border-right: none;
           border-top: none;
           border-bottom: none;
-          overflow: hidden !important;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-
-        .sidebar::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
+          overflow: hidden;
         }
 
         .sidebar.collapsed {
@@ -340,14 +292,6 @@ export default function Sidebar({ user, onExpandedChange }) {
           border-left: none;
           border-right: none;
           border-top: none;
-          overflow: hidden !important;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-
-        .header-section::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
         }
 
         .logo-container {
@@ -430,26 +374,8 @@ export default function Sidebar({ user, onExpandedChange }) {
         .nav-menu {
           flex: 1;
           padding: 20px 0;
-          overflow: hidden !important;
-          max-height: calc(100vh - 200px);
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-
-        .nav-menu::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-        }
-
-        .nav-menu * {
-          overflow: hidden !important;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-
-        .nav-menu *::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
+          overflow-y: auto;
+          overflow-x: hidden;
         }
 
         .nav-menu ul {
@@ -515,9 +441,13 @@ export default function Sidebar({ user, onExpandedChange }) {
           background: rgba(0,0,0,0.2);
           border-left: 2px solid #667eea;
           margin-left: 20px;
-          max-height: 300px;
+          margin-top: 4px;
+          margin-bottom: 8px;
+          max-height: 250px;
           overflow-y: auto;
           overflow-x: hidden;
+          border-radius: 0 8px 8px 0;
+          padding: 8px 0;
         }
 
         /* Submenu */
@@ -528,16 +458,19 @@ export default function Sidebar({ user, onExpandedChange }) {
         }
 
         .submenu li {
-          margin-bottom: 4px;
+          margin-bottom: 2px;
         }
 
         .submenu a {
           display: flex;
           align-items: center;
-          padding: 8px 20px;
+          padding: 10px 20px;
           color: #94a3b8;
           text-decoration: none;
           transition: all 0.2s ease;
+          font-size: 0.9rem;
+          border-radius: 0 6px 6px 0;
+          margin: 0 4px;
         }
 
         .submenu a:hover {
@@ -548,17 +481,21 @@ export default function Sidebar({ user, onExpandedChange }) {
         .submenu a.active {
           background: rgba(102, 126, 234, 0.3);
           color: white;
+          font-weight: 500;
         }
 
         .sub-icon {
           width: 20px;
           text-align: center;
           color: #667eea;
+          font-size: 0.8rem;
+          margin-right: 8px;
         }
 
         .sub-label {
-          margin-left: 8px;
-          font-size: 0.9rem;
+          font-size: 0.85rem;
+          font-weight: 400;
+          flex: 1;
         }
 
         /* Logout Section */
@@ -572,28 +509,6 @@ export default function Sidebar({ user, onExpandedChange }) {
           margin-top: auto;
           padding: 16px 0;
           border-top: 1px solid rgba(255, 255, 255, 0.1);
-          overflow: hidden !important;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-
-        .last-update-section::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
-        }
-
-        /* FORCE ALL SIDEBAR CHILDREN TO HAVE NO SCROLL */
-        .sidebar *,
-        .sidebar *::before,
-        .sidebar *::after {
-          overflow: hidden !important;
-          scrollbar-width: none !important;
-          -ms-overflow-style: none !important;
-        }
-
-        .sidebar *::-webkit-scrollbar {
-          display: none !important;
-          width: 0 !important;
         }
 
         .last-update-item {
@@ -627,8 +542,6 @@ export default function Sidebar({ user, onExpandedChange }) {
           100% { transform: translateX(100%); }
         }
 
-
-
         .update-content {
           display: flex;
           align-items: center;
@@ -654,7 +567,21 @@ export default function Sidebar({ user, onExpandedChange }) {
           text-align: center;
         }
 
-        /* Scrollbar untuk SUBMENU ONLY */
+        /* Scrollbar untuk Main Menu */
+        .nav-menu::-webkit-scrollbar {
+          width: 4px;
+        }
+
+        .nav-menu::-webkit-scrollbar-track {
+          background: transparent;
+        }
+
+        .nav-menu::-webkit-scrollbar-thumb {
+          background: rgba(255,255,255,0.2);
+          border-radius: 2px;
+        }
+
+        /* Scrollbar untuk SUBMENU */
         .submenu-container::-webkit-scrollbar {
           width: 4px;
         }

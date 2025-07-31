@@ -57,12 +57,14 @@ export default function StrategicExecutive() {
 
   const [loading, setLoading] = useState(false);
 
-  // FETCH DATA FROM CENTRALIZED LOGIC - AUTO SYNC
+  // OPTIMIZED: PARALLEL LOADING ALREADY IMPLEMENTED - AUTO SYNC 🚀
   useEffect(() => {
     const fetchStrategicData = async () => {
       setLoading(true);
       try {
-        // KPI DATA dari centralized logic
+        console.log('🚀 Strategic Executive - PARALLEL LOADING START');
+        
+        // PARALLEL LOADING - sudah optimal!
         const [kpiResponse, chartResponse] = await Promise.all([
           fetch(`/api/strategic-executive?currency=${currency}&year=${year}&month=${month}`),
           fetch(`/api/strategic-charts?currency=${currency}&year=${year}`)
@@ -71,14 +73,18 @@ export default function StrategicExecutive() {
         if (kpiResponse.ok) {
           const kpiData = await kpiResponse.json();
           setStrategicData(kpiData);
+          console.log('📊 Strategic KPI data loaded');
         }
 
         if (chartResponse.ok) {
           const chartsData = await chartResponse.json();
           setChartData(chartsData);
+          console.log('📈 Strategic chart data loaded');
         }
+        
+        console.log('✅ Strategic Executive - PARALLEL LOADING COMPLETED');
       } catch (error) {
-        console.error('Error fetching strategic data:', error);
+        console.error('❌ Error fetching strategic data:', error);
       }
       setLoading(false);
     };
