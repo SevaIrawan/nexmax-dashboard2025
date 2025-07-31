@@ -76,7 +76,7 @@ export default function Withdraw() {
             </div>
             <div style={{ fontSize: '16px', color: '#6b7280', textAlign: 'center' }}>
               Withdraw Transactions page is under development.<br />
-              We're working hard to bring you this feature soon!
+              We&apos;re working hard to bring you this feature soon!
             </div>
           </div>
         </div>
