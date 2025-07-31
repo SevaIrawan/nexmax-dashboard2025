@@ -1,40 +1,89 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/pages/api-reference/create-next-app).
+# NEXMAX DASHBOARD 2025
+
+A comprehensive Next.js dashboard application migrated from PostgreSQL to Supabase with unlimited data display capabilities.
+
+## Features
+
+- **Modern Dashboard Interface** - Clean and responsive design
+- **Supabase Backend** - Migrated from PostgreSQL for better scalability
+- **Unlimited Data Display** - No pagination limits on transaction pages
+- **Real-time Analytics** - Live KPI monitoring and reporting
+- **Multi-currency Support** - MYR and other currency support
+- **User Management** - Role-based access control
+- **Transaction Pages** - Deposit, Withdraw, Exchange, Headcount tracking
+
+## Tech Stack
+
+- **Frontend**: Next.js 15.4.3, React
+- **Backend**: Supabase (PostgreSQL)
+- **Authentication**: JWT with NextAuth
+- **Styling**: CSS Modules, Tailwind CSS
+- **Charts**: Chart.js components
+- **Deployment**: Vercel ready
 
 ## Getting Started
 
-First, run the development server:
+1. **Clone the repository**
+   `ash
+   git clone https://github.com/SevaIrawan/nexmax-dashboard2025.git
+   cd nexmax-dashboard2025
+   `
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+2. **Install dependencies**
+   `ash
+   npm install
+   `
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+3. **Setup environment variables**
+   `ash
+   cp env.example .env.local
+   # Edit .env.local with your Supabase credentials
+   `
 
-You can start editing the page by modifying `pages/index.js`. The page auto-updates as you edit the file.
+4. **Run development server**
+   `ash
+   npm run dev
+   `
 
-[API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) can be accessed on [http://localhost:3000/api/hello](http://localhost:3000/api/hello). This endpoint can be edited in `pages/api/hello.js`.
+5. **Open browser**
+   Navigate to [http://localhost:3000](http://localhost:3000)
 
-The `pages/api` directory is mapped to `/api/*`. Files in this directory are treated as [API routes](https://nextjs.org/docs/pages/building-your-application/routing/api-routes) instead of React pages.
+## Environment Variables
 
-This project uses [`next/font`](https://nextjs.org/docs/pages/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+Create a .env.local file with the following variables:
 
-## Learn More
+`env
+SUPABASE_URL=your_supabase_url
+SUPABASE_ANON_KEY=your_supabase_anon_key
+SUPABASE_SERVICE_ROLE_KEY=your_supabase_service_role_key
+JWT_SECRET=your_jwt_secret
+NEXTAUTH_SECRET=your_nextauth_secret
+NEXTAUTH_URL=http://localhost:3000
+`
 
-To learn more about Next.js, take a look at the following resources:
+## Project Structure
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn-pages-router) - an interactive Next.js tutorial.
+`
+nexmax-dashboard2025/
+ components/          # React components
+ pages/              # Next.js pages and API routes
+ lib/                # Database and utility functions
+ scripts/            # Migration and setup scripts
+ styles/             # CSS and styling files
+ docs/               # Documentation
+`
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+## Migration Status
 
-## Deploy on Vercel
+ **Completed**: PostgreSQL to Supabase migration
+ **Completed**: All API endpoints updated
+ **Completed**: Unlimited data display
+ **Completed**: Environment configuration
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+## Deployment
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/pages/building-your-application/deploying) for more details.
+This project is ready for deployment on Vercel or any Next.js compatible platform.
+
+## License
+
+MIT License - see LICENSE file for details.
