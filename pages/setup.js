@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import Link from 'next/link';
 
 export default function Setup() {
   const [loading, setLoading] = useState(false);
@@ -178,9 +179,9 @@ export default function Setup() {
         <h3>📝 Instructions:</h3>
         <ol>
           <li>Click <strong>Test Table</strong> to check if table exists and has data</li>
-          <li>If table doesn't exist, click <strong>Create Table</strong></li>
+          <li>If table doesn&apos;t exist, click <strong>Create Table</strong></li>
           <li>If table is empty, click <strong>Seed Data</strong> to add sample data</li>
-          <li>After setup, go to <a href="/transaction/exchange">Exchange page</a> to test</li>
+          <li>After setup, go to <Link href="/transaction/exchange">Exchange page</Link> to test</li>
         </ol>
       </div>
     </div>
